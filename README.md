@@ -15,13 +15,24 @@ http://demo.hotspot.kiwix.org
 
 - Scaleway Start-2-M-SATA (dedibox) with 16GB RAM and 1TB disk for €17/m
 - Debian
+
+## setup script
+
 - node-like setup with bastion
-- docker install
-- docker-compose
+- docker install (comes with compose)
 - a maintenance mode docker-compose installed in `/src/maint-compose.yaml`
   - simple nginx default server with HTML UI
 - symlink on `/etc/docker/compose.yaml` to `/src/maint-compose.yaml`
 - a docker-compose systemd unit to start docker-compose on start
+- python install
+- python venv
+
+## watcher script
+
+- runs forever
+- checks the special image endpoint on imager service (https://api.imager.kiwix.org/auto-images/demo/json)
+- check if target URL has changed
+- call `deploy-script` if it did, otherwise sleeps
 
 ## toggle script
 
