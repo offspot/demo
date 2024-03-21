@@ -89,3 +89,4 @@ prepare-image /demo/image.img
 - _Protect_ the service via a password (provided in-login page? as we want to prevent bots mostly)
 - Use LXC containers to isolate from host and allow restoring snapshots frequently to prevent any attack from persisting
 - Use Apache Guacamole to isolate the hotpost HTTP service(s) as users would access a VNC-like rendering of it
+- Add an FAQ/doc for end-users (in GH for now)
