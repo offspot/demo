@@ -83,3 +83,8 @@ prepare-image /demo/image.img
       - replace `old_fqdn` with `fqdn`
     - remove any secu-related option that we don't set?
 - touch `/data/demo_prepared`
+
+## Next
+
+- Use LXC containers to isolate from host and allow restoring snapshots frequently to prevent any attack from persisting
+- Use Apache Guacamole to isolate the hotpost HTTP service(s) as users would access a VNC-like rendering of it
