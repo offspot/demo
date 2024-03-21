@@ -45,6 +45,7 @@ deploy-demo-for http://xxxxx/xyz.img
 - unmount old image `/data`
 - release loop-device
 - remove old image file `/demo/image.img`
+- purge docker images and containers for image
 - download new image `/demo/image.img`
 - prepare-image `/demo/image.img`
 - `toggle-compose image`
