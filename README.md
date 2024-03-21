@@ -1,5 +1,9 @@
 # Kiwix Hotspot Demo
 
+Kiwix Hotspot Demo adheres to openZIM's [Contribution Guidelines](https://github.com/openzim/overview/wiki/Contributing).
+
+Kiwix Hotspot Demo has implemented openZIM's [Python bootstrap, conventions and policies](https://github.com/openzim/_python-bootstrap/docs/Policy.md) **v1.0.0**.
+
 http://demo.hotspot.kiwix.org
 
 - Arrive on home page
