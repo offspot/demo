@@ -19,17 +19,19 @@ http://demo.hotspot.kiwix.org
 
 - Scaleway Start-2-M-SATA (dedibox) with 16GB RAM and 1TB disk for €17/m
 - Debian
+- node-like setup with bastion
+- docker install (comes with compose)
+- python install (3.12) + venv
+- this project installed somewhere
+  - pip install git+https://github.com/offspot/demo@main
 
 ## setup script
 
-- node-like setup with bastion
-- docker install (comes with compose)
-- a maintenance mode docker-compose installed in `/src/maint-compose.yaml`
-  - simple nginx default server with HTML UI
-- symlink on `/etc/docker/compose.yaml` to `/src/maint-compose.yaml`
-- a docker-compose systemd unit to start docker-compose on start
-- python install
-- python venv
+- install symlink on `/etc/docker/compose.yaml` to `<src_path>/maint-compose/docker-compose.yaml`
+  - simple caddy default server with minimal HTML UI saying "we are in maintenance" (with HTTPS auto certificates)
+- install a systemd unit to manage the `/etc/docker/compose.yaml` docker-compose (start / stop)
+  - source file in `src/offspot_demo/systemd-unit`
+- start and enable this systemd unit
 
 ## watcher script
 

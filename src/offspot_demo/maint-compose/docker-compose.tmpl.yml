@@ -1,0 +1,6 @@
+services:
+  webserver:
+    build: {{ src_path }}/maint-compose/
+    ports:
+      - 80:80
+      - 443:443
