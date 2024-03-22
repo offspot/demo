@@ -9,8 +9,8 @@ from offspot_demo.constants import (
     JINJA_ENV,
     SRC_PATH,
     STARTUP_DURATION,
-    SYSTEMD_UNIT_NAME,
-    SYSTEMD_UNIT_PATH,
+    SYSTEMD_OFFSPOT_UNIT_NAME,
+    SYSTEMD_OFFSPOT_UNIT_PATH,
 )
 from offspot_demo.utils import run_command
 
@@ -56,7 +56,7 @@ def check_systemd_service(
     If check_enabled is True, it also checks that the unit is enabled
     """
     status = run_command(
-        ["systemctl", "status", "--no-pager", f"{SYSTEMD_UNIT_NAME}.service"],
+        ["systemctl", "status", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"],
         ok_return_codes=ok_return_codes,
     )
     if "Loaded: loaded" not in status.stdout:
@@ -85,14 +85,16 @@ def setup_systemd_service():
 
     print("Installing systemd unit")
     shutil.copyfile(
-        SRC_PATH / "systemd-unit/offspot-demo.service",
-        SYSTEMD_UNIT_PATH,
+        SRC_PATH / f"systemd-unit/{SYSTEMD_OFFSPOT_UNIT_NAME}.service",
+        SYSTEMD_OFFSPOT_UNIT_PATH,
     )
     print("Checking systemd unit")
     check_systemd_service(ok_return_codes=[0, 3])
 
     print("Starting systemd unit")
-    run_command(["systemctl", "start", "--no-pager", f"{SYSTEMD_UNIT_NAME}.service"])
+    run_command(
+        ["systemctl", "start", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"]
+    )
     check_systemd_service(check_running=True)
 
     print(
@@ -105,7 +107,9 @@ def setup_systemd_service():
     check_systemd_service(check_running=True)
 
     print("Enabling systemd unit")
-    run_command(["systemctl", "enable", "--no-pager", f"{SYSTEMD_UNIT_NAME}.service"])
+    run_command(
+        ["systemctl", "enable", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"]
+    )
     check_systemd_service(check_running=True, check_enabled=True)
 
 

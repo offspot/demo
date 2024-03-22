@@ -18,8 +18,10 @@ DOCKER_COMPOSE_IMAGE_PATH = TARGET_DIR / "compose.yaml"
 DOCKER_COMPOSE_MAINT_PATH = SRC_PATH / "maint-compose" / "docker-compose.yml"
 DOCKER_COMPOSE_SYMLINK_PATH = Path("/etc/docker/compose.yaml")
 
-SYSTEMD_UNIT_NAME = "offspot-demo"
-SYSTEMD_UNIT_PATH = Path(f"/etc/systemd/system/{SYSTEMD_UNIT_NAME}.service")
+SYSTEMD_OFFSPOT_UNIT_NAME = "demo-offspot"
+SYSTEMD_OFFSPOT_UNIT_PATH = Path(
+    f"/etc/systemd/system/{SYSTEMD_OFFSPOT_UNIT_NAME}.service"
+)
 
 JINJA_ENV = Environment(
     loader=FileSystemLoader(Path(__file__).parent), autoescape=select_autoescape()
