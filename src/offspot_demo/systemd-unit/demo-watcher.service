@@ -1,0 +1,6 @@
+[Unit]
+Description=demo-watcher
+
+[Service]
+User=root
+ExecStart=/root/env/bin/demo-watcher
