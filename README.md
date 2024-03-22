@@ -31,7 +31,8 @@ If you start from a bare machine, you can:
 To install the demo, you have to:
 - install the demo Python tooling: run `pip install git+https://github.com/offspot/demo@main`
 - customize the environment:
-  - copy the `contrib/environment` file to `/etc/demo/environment` (or any other appropriate location)
+  - copy the `contrib/environment` file to `/etc/demo/environment`
+    - could be any other appropriate location, but then you have to modify `<src_path>/systemd-unit/demo-offspot.service`
   - customize this file as needed
   - automatically load the environment data in your user session: `echo "export \$(grep -v '^#' /etc/demo/environment | xargs) && env | grep OFFSPOT_DEMO" | tee /etc/profile.d/demo-env.sh`
 - setup the demo: run `demo-setup`
