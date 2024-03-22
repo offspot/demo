@@ -5,22 +5,12 @@ from time import sleep
 
 from offspot_demo.constants import (
     DOCKER_COMPOSE_SYMLINK_PATH,
-    FQDN,
     JINJA_ENV,
     SRC_PATH,
     STARTUP_DURATION,
     SYSTEMD_UNIT_NAME,
     SYSTEMD_UNIT_PATH,
 )
-
-
-def render_maint_caddyfile():
-    """Render the maintenance Caddyfile to customize local stuff"""
-    print("Rendering maintenance Caddyfile")
-    with open(SRC_PATH / "maint-compose/Caddyfile", "w") as fh:
-        fh.write(
-            JINJA_ENV.get_template("maint-compose/Caddyfile.tmpl").render(fqdn=FQDN)
-        )
 
 
 def render_maint_docker_compose():
@@ -137,7 +127,6 @@ def setup_systemd_service():
 
 def entrypoint():
     """Setup the machine for proper operation"""
-    render_maint_caddyfile()
     render_maint_docker_compose()
     install_symlink()
     setup_systemd_service()
