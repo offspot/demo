@@ -105,6 +105,9 @@ def setup_systemd_service():
         ok_return_codes=[0, 5],
     )
 
+    print("Reload systemctl daemon")
+    run_command(["systemctl", "daemon-reload"])
+
     print("Starting systemd unit")
     run_command(
         ["systemctl", "start", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"]
