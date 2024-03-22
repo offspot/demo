@@ -30,6 +30,12 @@ services:
     ports:
       - 80:80
       - 443:443
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+volumes:
+  caddy_data:
+  caddy_config:
 """
             ).render(src_path=SRC_PATH)
         )
