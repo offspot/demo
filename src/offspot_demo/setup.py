@@ -18,9 +18,16 @@ def render_maint_docker_compose():
     print("Rendering maintenance docker-compose")
     with open(SRC_PATH / "maint-compose/docker-compose.yml", "w") as fh:
         fh.write(
-            JINJA_ENV.get_template("maint-compose/docker-compose.tmpl.yml").render(
-                src_path=SRC_PATH
-            )
+            JINJA_ENV.from_string(
+                """
+services:
+  webserver:
+    build: {{ src_path }}/maint-compose/
+    ports:
+      - 80:80
+      - 443:443
+"""
+            ).render(src_path=SRC_PATH)
         )
 
 
