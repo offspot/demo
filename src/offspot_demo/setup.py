@@ -99,6 +99,12 @@ def setup_systemd_service():
     print("Checking systemd unit")
     check_systemd_service(ok_return_codes=[0, 3])
 
+    print("Stopping systemd unit (if already started)")
+    run_command(
+        ["systemctl", "stop", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"],
+        ok_return_codes=[0, 5],
+    )
+
     print("Starting systemd unit")
     run_command(
         ["systemctl", "start", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"]
