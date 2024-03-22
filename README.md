@@ -29,9 +29,11 @@ If you start from a bare machine, you can:
 ## Installation
 
 To install the demo, you have to:
-- adjust the tooling to your environment by setting appropriate environment variables
-  - `OFFSPOT_DEMO_FQDN`: FQDN which will be used by the demo, e.g. demo.hotspot.kiwix.org
 - install the demo Python tooling: run `pip install git+https://github.com/offspot/demo@main`
+- customize the environment:
+  - copy the `contrib/environment` file to `/etc/demo/environment` (or any other appropriate location)
+  - customize this file as needed
+  - automatically load the environment data in your user session: `echo "export \$(grep -v '^#' /etc/demo/environment | xargs) && env | grep OFFSPOT_DEMO" | tee /etc/profile.d/demo-env.sh`
 - setup the demo: run `demo-setup`
 
 ## Tooling

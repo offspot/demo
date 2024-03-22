@@ -1,0 +1,2 @@
+# FQDN which will be used by the demo, e.g. demo.hotspot.kiwix.org
+OFFSPOT_DEMO_FQDN="demo.hostpot.kiwix.org"

@@ -25,6 +25,8 @@ def render_maint_docker_compose():
 services:
   webserver:
     build: {{ src_path }}/maint-compose/
+    env_file:
+      - /etc/demo/environment
     ports:
       - 80:80
       - 443:443

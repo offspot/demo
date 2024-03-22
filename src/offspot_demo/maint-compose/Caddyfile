@@ -1,4 +1,4 @@
-{$OFFSPOT_DEMO_FQDN:demo.hostpot.kiwix.org} {
+{$OFFSPOT_DEMO_FQDN} {
     file_server {
         root /app
     }
