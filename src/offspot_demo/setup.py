@@ -12,6 +12,7 @@ from offspot_demo.constants import (
     SYSTEMD_UNIT_NAME,
     SYSTEMD_UNIT_PATH,
 )
+from offspot_demo.utils import run_command
 
 
 def render_maint_docker_compose():
@@ -42,31 +43,8 @@ def install_symlink():
     DOCKER_COMPOSE_SYMLINK_PATH.symlink_to(DOCKER_COMPOSE_MAINT_PATH)
 
 
-def run_command(
-    command: list[str], expected_return_code: int = 0
-) -> subprocess.CompletedProcess[str]:
-    """Run a shell command and check return code"""
-    status = subprocess.run(
-        [
-            "/usr/bin/env",
-            *command,
-        ],
-        text=True,
-        stderr=subprocess.STDOUT,
-        stdout=subprocess.PIPE,
-        check=False,
-    )
-    if status.returncode != expected_return_code:
-        print(f"Running command failed with code {status.returncode}")
-        print(f"Command was: {command}")
-        print("Stdout/Stderr is:")
-        print(status.stdout)
-        sys.exit(1)
-    return status
-
-
 def check_systemd_service(
-    expected_return_code: int = 0,
+    ok_return_codes: list[int] | None = None,
     *,
     check_running: bool = False,
     check_enabled: bool = False,
@@ -79,7 +57,7 @@ def check_systemd_service(
     """
     status = run_command(
         ["systemctl", "status", "--no-pager", f"{SYSTEMD_UNIT_NAME}.service"],
-        expected_return_code=expected_return_code,
+        ok_return_codes=ok_return_codes,
     )
     if "Loaded: loaded" not in status.stdout:
         print("systemd unit not loaded properly:")
@@ -111,7 +89,7 @@ def setup_systemd_service():
         SYSTEMD_UNIT_PATH,
     )
     print("Checking systemd unit")
-    check_systemd_service(expected_return_code=3)
+    check_systemd_service(ok_return_codes=[0, 3])
 
     print("Starting systemd unit")
     run_command(["systemctl", "start", "--no-pager", f"{SYSTEMD_UNIT_NAME}.service"])
