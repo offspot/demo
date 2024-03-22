@@ -78,7 +78,7 @@ def check_systemd_service(
     If check_enabled is True, it also checks that the unit is enabled
     """
     status = run_command(
-        ["systemctl", "status", f"{SYSTEMD_UNIT_NAME}.service"],
+        ["systemctl", "status", "--no-pager", f"{SYSTEMD_UNIT_NAME}.service"],
         expected_return_code=expected_return_code,
     )
     if "Loaded: loaded" not in status.stdout:
@@ -114,7 +114,7 @@ def setup_systemd_service():
     check_systemd_service(expected_return_code=3)
 
     print("Starting systemd unit")
-    run_command(["systemctl", "start", f"{SYSTEMD_UNIT_NAME}.service"])
+    run_command(["systemctl", "start", "--no-pager", f"{SYSTEMD_UNIT_NAME}.service"])
     check_systemd_service(check_running=True)
 
     print(
@@ -127,7 +127,7 @@ def setup_systemd_service():
     check_systemd_service(check_running=True)
 
     print("Enabling systemd unit")
-    run_command(["systemctl", "enable", f"{SYSTEMD_UNIT_NAME}.service"])
+    run_command(["systemctl", "enable", "--no-pager", f"{SYSTEMD_UNIT_NAME}.service"])
     check_systemd_service(check_running=True, check_enabled=True)
 
 
