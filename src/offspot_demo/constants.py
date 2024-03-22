@@ -12,13 +12,14 @@ PREPARED_FLAG_PATH = TARGET_DIR / "prepared.ok"
 
 FQDN = os.getenv("OFFSPOT_DEMO_FQDN", "demo.hostpot.kiwix.org")
 
-DOCKER_COMPOSE_PROD_PATH = TARGET_DIR / "compose.yaml"
+SRC_PATH = Path(__file__).parent
+
+DOCKER_COMPOSE_IMAGE_PATH = TARGET_DIR / "compose.yaml"
+DOCKER_COMPOSE_MAINT_PATH = SRC_PATH / "maint-compose" / "docker-compose.yml"
 DOCKER_COMPOSE_SYMLINK_PATH = Path("/etc/docker/compose.yaml")
 
 SYSTEMD_UNIT_NAME = "offspot-demo"
 SYSTEMD_UNIT_PATH = Path(f"/etc/systemd/system/{SYSTEMD_UNIT_NAME}.service")
-
-SRC_PATH = Path(__file__).parent
 
 JINJA_ENV = Environment(
     loader=FileSystemLoader(Path(__file__).parent), autoescape=select_autoescape()

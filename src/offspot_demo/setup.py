@@ -4,6 +4,7 @@ import sys
 from time import sleep
 
 from offspot_demo.constants import (
+    DOCKER_COMPOSE_MAINT_PATH,
     DOCKER_COMPOSE_SYMLINK_PATH,
     JINJA_ENV,
     SRC_PATH,
@@ -16,7 +17,7 @@ from offspot_demo.constants import (
 def render_maint_docker_compose():
     """Render the maintenance docker-compose to customize local stuff"""
     print("Rendering maintenance docker-compose")
-    with open(SRC_PATH / "maint-compose/docker-compose.yml", "w") as fh:
+    with open(DOCKER_COMPOSE_MAINT_PATH, "w") as fh:
         fh.write(
             JINJA_ENV.from_string(
                 """
@@ -38,9 +39,7 @@ def install_symlink():
     """
     print("Installing docker-compose symlink")
     DOCKER_COMPOSE_SYMLINK_PATH.unlink(missing_ok=True)
-    DOCKER_COMPOSE_SYMLINK_PATH.symlink_to(
-        SRC_PATH / "maint-compose/docker-compose.yml"
-    )
+    DOCKER_COMPOSE_SYMLINK_PATH.symlink_to(DOCKER_COMPOSE_MAINT_PATH)
 
 
 def run_command(
