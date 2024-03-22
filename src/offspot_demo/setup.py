@@ -10,7 +10,8 @@ from offspot_demo.constants import (
     SRC_PATH,
     STARTUP_DURATION,
     SYSTEMD_OFFSPOT_UNIT_NAME,
-    SYSTEMD_OFFSPOT_UNIT_PATH,
+    SYSTEMD_UNITS_PATH,
+    SYSTEMD_WATCHER_UNIT_NAME,
 )
 from offspot_demo.utils.process import run_command
 
@@ -52,9 +53,11 @@ def install_symlink():
 
 
 def check_systemd_service(
+    unit_fullname: str,
     ok_return_codes: list[int] | None = None,
     *,
     check_running: bool = False,
+    check_waiting: bool = False,
     check_enabled: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     """Check status of the systemd unit
@@ -64,7 +67,12 @@ def check_systemd_service(
     If check_enabled is True, it also checks that the unit is enabled
     """
     status = run_command(
-        ["systemctl", "status", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"],
+        [
+            "systemctl",
+            "status",
+            "--no-pager",
+            unit_fullname,
+        ],
         ok_return_codes=ok_return_codes,
     )
     if "Loaded: loaded" not in status.stdout:
@@ -78,28 +86,50 @@ def check_systemd_service(
             sys.exit(3)
         else:
             print("\tsystemd unit is running")
+    if check_waiting:
+        if "Active: active (waiting)" not in status.stdout:
+            print("systemd unit is not waiting:")
+            print(status.stdout)
+            sys.exit(4)
+        else:
+            print("\tsystemd unit is waiting")
     if check_enabled:
         if "; enabled; " not in status.stdout:
             print("systemd unit is not enabled:")
             print(status.stdout)
-            sys.exit(4)
+            sys.exit(5)
         else:
             print("\tsystemd unit is enabled")
     return status
 
 
-def setup_systemd_service():
-    """Setup systemd service for offspot-demo: install, start, enable (with checks)"""
-
-    print("Installing systemd unit")
+def install_systemd_file(unit_fullname: str):
     shutil.copyfile(
-        SRC_PATH / f"systemd-unit/{SYSTEMD_OFFSPOT_UNIT_NAME}.service",
-        SYSTEMD_OFFSPOT_UNIT_PATH,
+        SRC_PATH / f"systemd-unit/{unit_fullname}",
+        SYSTEMD_UNITS_PATH / f"{unit_fullname}",
     )
-    print("Checking systemd unit")
-    check_systemd_service(ok_return_codes=[0, 3])
 
-    print("Stopping systemd unit (if already started)")
+
+def setup_systemd():
+    """Setup systemd : install, start, enable (with checks)"""
+
+    print("Installing systemd files")
+    install_systemd_file(unit_fullname=f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service")
+    install_systemd_file(unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.timer")
+    install_systemd_file(unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.service")
+
+    print("Checking systemd units")
+    check_systemd_service(
+        unit_fullname=f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service", ok_return_codes=[0, 3]
+    )
+    check_systemd_service(
+        unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.timer", ok_return_codes=[0, 3]
+    )
+    check_systemd_service(
+        unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.service", ok_return_codes=[0, 3]
+    )
+
+    print("Stopping systemd units (if already started)")
     run_command(
         ["systemctl", "stop", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"],
         ok_return_codes=[0, 5],
@@ -108,30 +138,55 @@ def setup_systemd_service():
     print("Reload systemctl daemon")
     run_command(["systemctl", "daemon-reload"])
 
-    print("Starting systemd unit")
-    run_command(
-        ["systemctl", "start", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"]
-    )
-    check_systemd_service(check_running=True)
-
-    print(
-        f"Sleeping {STARTUP_DURATION} seconds to check systemd unit is still ok after"
-        " a while"
-    )
-    sleep(STARTUP_DURATION)
-
-    print("Checking again systemd unit status")
-    check_systemd_service(check_running=True)
-
-    print("Enabling systemd unit")
+    print("Enabling systemd units")
     run_command(
         ["systemctl", "enable", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"]
     )
-    check_systemd_service(check_running=True, check_enabled=True)
+    run_command(
+        ["systemctl", "enable", "--no-pager", f"{SYSTEMD_WATCHER_UNIT_NAME}.timer"]
+    )
+
+    print("Checking systemd units")
+    check_systemd_service(
+        unit_fullname=f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service",
+        check_enabled=True,
+        ok_return_codes=[0, 3],
+    )
+    check_systemd_service(
+        unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.timer",
+        check_enabled=True,
+        ok_return_codes=[0, 3],
+    )
+
+    print("Starting systemd units")
+    run_command(
+        ["systemctl", "start", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"]
+    )
+    run_command(
+        ["systemctl", "start", "--no-pager", f"{SYSTEMD_WATCHER_UNIT_NAME}.timer"]
+    )
+
+    print(
+        f"Sleeping {STARTUP_DURATION} seconds to check system status still ok after a"
+        " while"
+    )
+    sleep(STARTUP_DURATION)
+
+    print("Checking systemd unit is still running")
+    check_systemd_service(
+        unit_fullname=f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service",
+        check_enabled=True,
+        check_running=True,
+    )
+    check_systemd_service(
+        unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.timer",
+        check_enabled=True,
+        check_waiting=True,
+    )
 
 
 def entrypoint():
     """Setup the machine for proper operation"""
     render_maint_docker_compose()
     install_symlink()
-    setup_systemd_service()
+    setup_systemd()

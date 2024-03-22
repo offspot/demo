@@ -145,3 +145,5 @@ Kiwix is running a demo instance at http://demo.hotspot.kiwix.org
 - Use LXC containers to isolate from host and allow restoring snapshots frequently to prevent any attack from persisting
 - Use Apache Guacamole to isolate the hotpost HTTP service(s) as users would access a VNC-like rendering of it
 - Add an FAQ/doc for end-users (in GH for now)
+- Do not retry to deploy the same failing image over-and-over every "watcher interval" (15 minutes)
+- Implement a healthcheck endpoint (offspot services + demo watcher/deploy, with details like in imager-service https://imager.kiwix.org/health-check)
