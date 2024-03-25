@@ -4,10 +4,14 @@ import os
 import pathlib
 import subprocess
 
-logger = logging.getLogger()
+from offspot_demo.constants import get_logger
+from offspot_demo.utils import get_environ
 
-# /!\ need to retrieve debug setting
-only_on_debug: bool = True
+logger = get_logger("deploy")  # reusing deploy logger to get its level
+
+
+def only_on_debug() -> bool:
+    return logger.level <= logging.DEBUG
 
 
 def flush_writes():
@@ -17,17 +21,10 @@ def flush_writes():
     subprocess.run(
         ["/usr/bin/env", "sync", "-f"],
         check=True,
-        capture_output=only_on_debug,
+        capture_output=only_on_debug(),
         text=True,
         env=get_environ(),
     )
-
-
-def get_environ() -> dict[str, str]:
-    """current environment variable with langs set to C to control cli output"""
-    environ = os.environ.copy()
-    environ.update({"LANG": "C", "LC_ALL": "C"})
-    return environ
 
 
 def get_loopdev() -> str:
@@ -79,7 +76,7 @@ def create_block_special_device(dev_path: str, major: int, minor: int):
     subprocess.run(
         ["/usr/bin/env", "mknod", dev_path, "b", str(major), str(minor)],
         check=True,
-        capture_output=only_on_debug,
+        capture_output=only_on_debug(),
         text=True,
         env=get_environ(),
     )
@@ -90,7 +87,7 @@ def attach_to_device(img_fpath: pathlib.Path, loop_dev: str):
     subprocess.run(
         ["/usr/bin/env", "losetup", "--partscan", loop_dev, str(img_fpath)],
         check=True,
-        capture_output=only_on_debug,
+        capture_output=only_on_debug(),
         text=True,
         env=get_environ(),
     )
@@ -118,7 +115,7 @@ def detach_device(loop_dev: str, *, failsafe: bool = False) -> bool:
     ps = subprocess.run(
         ["/usr/bin/env", "losetup", "--detach", loop_dev],
         check=not failsafe,
-        capture_output=only_on_debug,
+        capture_output=only_on_debug(),
         text=True,
         env=get_environ(),
     )
@@ -145,7 +142,7 @@ def mount_on(dev_path: str, mount_point: pathlib.Path, filesystem: str | None) -
     return (
         subprocess.run(
             commands,
-            capture_output=only_on_debug,
+            capture_output=only_on_debug(),
             text=True,
             check=False,
             env=get_environ(),
@@ -160,7 +157,7 @@ def unmount(mount_point: pathlib.Path) -> bool:
     return (
         subprocess.run(
             ["/usr/bin/env", "umount", str(mount_point)],
-            capture_output=only_on_debug,
+            capture_output=only_on_debug(),
             text=True,
             check=False,
             env=get_environ(),

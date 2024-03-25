@@ -1,7 +1,10 @@
+import logging
 import os
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+from offspot_demo.__about__ import NAME as PROJECT_NAME
 
 OFFSPOT_IMAGE_ID = "offspot-demo"
 OFFSPOT_IMAGE_URL = f"https://api.imager.kiwix.org/auto-images/{OFFSPOT_IMAGE_ID}/json"
@@ -33,3 +36,10 @@ STARTUP_DURATION = 10
 # maintenance container and images must be labeled with this
 # in order not to be purged by deploy
 DOCKER_LABEL_MAINT = "maintenance"
+
+
+logging.basicConfig(level=logging.INFO)
+
+
+def get_logger(name: str | None) -> logging.Logger:
+    return logging.getLogger(PROJECT_NAME if not name else f"{PROJECT_NAME}/{name}")

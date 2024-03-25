@@ -22,6 +22,7 @@ from offspot_demo.constants import (
     DOCKER_LABEL_MAINT,
     IMAGE_PATH,
     TARGET_DIR,
+    get_logger,
 )
 from offspot_demo.prepare import prepare_image
 from offspot_demo.toggle import toggle_demo
@@ -37,8 +38,7 @@ from offspot_demo.utils.image import (
 
 ONE_MIB = 2**20
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("demo-deploy")
+logger = get_logger("deploy")
 
 
 def fail(message: str = "An error occured", code: int = 1) -> int:
