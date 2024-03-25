@@ -10,6 +10,7 @@ import hashlib
 import http
 import logging
 import sys
+from contextlib import ExitStack
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import NamedTuple
@@ -25,7 +26,7 @@ from offspot_demo.constants import (
 )
 from offspot_demo.prepare import prepare_image
 from offspot_demo.toggle import toggle_demo
-from offspot_demo.utils import fail
+from offspot_demo.utils import fail, is_root
 from offspot_demo.utils.image import (
     attach_to_device,
     detach_device,
@@ -197,20 +198,35 @@ def deploy_url(url: str, *, reuse_image: bool):
         url: the image URL (ideally hosted on S3)
         reuse_image: whether to not remove existing image file and skip download (dev)
     """
-    rc = do_deploy_url(url, reuse_image=reuse_image)
-    if rc:
-        logger.debug("Cleaning-up resources")
-        frc = rc
-        for func in (set_maint_mode, unmount_detach_release):
-            frc += func()
-        if frc != rc:
-            return fail("Failed to cleanup resources post-error", frc)
+
+    rc = -1
+    # add a post-exectution callback to do_deploy_url so our cleanup func is run
+    # should the function raise an exception or an error
+    with ExitStack() as stack:
+        stack.callback(on_error_cleanup)
+        rc = do_deploy_url(url, reuse_image=reuse_image)
+        # if the rc is 0 (success), we remove the callback from the stack
+        # so it's not run
+        if not rc:
+            stack.pop_all()
     return rc
+
+
+def on_error_cleanup():
+    """cleanup and resource release to apply post-error"""
+    logger.debug("Post-error cleanup")
+    for func in (set_maint_mode, unmount_detach_release):
+        rc = func()
+        if rc:
+            fail(f"> Error cleaning up {func}")
 
 
 def do_deploy_url(url: str, *, reuse_image: bool):
     """actual deployment ; no failsafe. Prefer deploy_url()"""
     logger.info(f"deploying for {url}")
+
+    if not is_root():
+        return fail("must be root", 1)
 
     if not is_url_correct(url):
         return fail(f"URL is incorrect: {url}")

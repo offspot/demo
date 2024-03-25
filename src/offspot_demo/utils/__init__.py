@@ -15,3 +15,7 @@ def get_environ() -> dict[str, str]:
     environ.update({"LANG": "C", "LC_ALL": "C"})
     return environ
 
+
+def is_root() -> bool:
+    """whether running as root"""
+    return os.getuid() == 0
