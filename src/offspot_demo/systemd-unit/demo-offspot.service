@@ -1,0 +1,20 @@
+[Unit]
+Description=offspot-demo
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+RestartSec=30
+User=root
+Group=docker
+# Shutdown container (if running) when unit is started
+ExecStartPre=/usr/bin/docker compose -f /etc/docker/compose.yaml down
+# Start container when unit is started
+ExecStart=/usr/bin/docker compose -f /etc/docker/compose.yaml up --build
+# Stop container when unit is stopped
+ExecStop=/usr/bin/docker compose -f /etc/docker/compose.yaml down
+EnvironmentFile=/etc/demo/environment
+
+[Install]
+WantedBy=multi-user.target
