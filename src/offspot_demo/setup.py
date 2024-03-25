@@ -12,7 +12,7 @@ from offspot_demo.constants import (
     SYSTEMD_OFFSPOT_UNIT_NAME,
     SYSTEMD_OFFSPOT_UNIT_PATH,
 )
-from offspot_demo.utils import run_command
+from offspot_demo.utils.process import run_command
 
 
 def render_maint_docker_compose():
