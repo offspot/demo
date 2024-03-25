@@ -14,7 +14,7 @@ except ImportError:
     from yaml import Dumper, SafeLoader
 
 from offspot_demo.constants import FQDN, OCI_PLATFORM, TARGET_DIR, logger
-from offspot_demo.utils import fail
+from offspot_demo.utils import fail, is_root
 from offspot_demo.utils.process import run_command
 
 
@@ -54,6 +54,9 @@ def prepare_image(target_dir: Path) -> int:
         target_dir: the path of a mounted 3rd partition or an offspot image
     """
     logger.info(f"prepare-image from {target_dir!s}")
+
+    if not is_root():
+        return fail("must be root", 1)
 
     preapred_ok_path = target_dir / "prepared.ok"
     if preapred_ok_path.exists():
