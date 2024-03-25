@@ -22,6 +22,7 @@ from offspot_demo.constants import (
     DOCKER_LABEL_MAINT,
     IMAGE_PATH,
     TARGET_DIR,
+    Mode,
     get_logger,
 )
 from offspot_demo.prepare import prepare_image
@@ -202,28 +203,35 @@ def deploy_url(url: str, *, reuse_image: bool):
     """Deploy from an URL
 
     Parameters:
+        url: the image URL (ideally hosted on S3)
         reuse_image: whether to not remove existing image file and skip download (dev)
     """
+    rc = do_deploy_url(url, reuse_image=reuse_image)
+    if rc:
+        logger.debug("Cleaning-up resources")
+        frc = rc
+        for func in (set_maint_mode, unmount_detach_release):
+            frc += func()
+        if frc != rc:
+            return fail("Failed to cleanup resources post-error", frc)
+    return rc
+
+
+def do_deploy_url(url: str, *, reuse_image: bool):
+    """actual deployment ; no failsafe. Prefer deploy_url()"""
     logger.info(f"deploying for {url}")
 
     if not is_url_correct(url):
         return fail(f"URL is incorrect: {url}")
     logger.info("> URL is OK")
 
-    rc = toggle_demo(mode="maintenance")
+    rc = toggle_demo(mode=Mode.MAINT)
     if rc:
         return fail("Failed to switch to maintenance mode")
 
-    if is_mounted(TARGET_DIR):
-        logger.info(f"> unmounting {TARGET_DIR}")
-        if not unmount(TARGET_DIR):
-            return fail(f"Failed to unmout {TARGET_DIR}")
-
-    loop_dev = get_loopdev_used_by(IMAGE_PATH)
-    if loop_dev:
-        logger.info(f"> detaching {loop_dev}")
-        if not detach_device(loop_dev=loop_dev, failsafe=True):
-            return fail(f"Failed to detach {loop_dev}")
+    rc = unmount_detach_release()
+    if rc:
+        return fail("Unable to release image", rc)
 
     if IMAGE_PATH.exists() and not reuse_image:
         logger.info(f"> removing {IMAGE_PATH}")
@@ -270,12 +278,32 @@ def deploy_url(url: str, *, reuse_image: bool):
         return fail("Failed to prepare image", rc)
 
     logger.info("Switching to image mode")
-    rc = toggle_demo(mode="image")
+    rc = toggle_demo(mode=Mode.IMAGE)
     if rc:
         return fail("Failed to switch to image mode", rc)
 
     logger.info("> demo ready")
     return 0
+
+
+def unmount_detach_release() -> int:
+    """unmount image and release loop-device"""
+    if is_mounted(TARGET_DIR):
+        logger.info(f"> unmounting {TARGET_DIR}")
+        if not unmount(TARGET_DIR):
+            return fail(f"Failed to unmout {TARGET_DIR}")
+
+    loop_dev = get_loopdev_used_by(IMAGE_PATH)
+    if loop_dev:
+        logger.info(f"> detaching {loop_dev}")
+        if not detach_device(loop_dev=loop_dev, failsafe=True):
+            return fail(f"Failed to detach {loop_dev}")
+    return 0
+
+
+def set_maint_mode() -> int:
+    """change mode to maintenance mode (used as cleanup)"""
+    return toggle_demo(Mode.MAINT)
 
 
 def entrypoint():

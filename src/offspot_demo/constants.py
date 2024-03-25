@@ -1,3 +1,4 @@
+import enum
 import logging
 import os
 from pathlib import Path
@@ -36,6 +37,11 @@ STARTUP_DURATION = 10
 # maintenance container and images must be labeled with this
 # in order not to be purged by deploy
 DOCKER_LABEL_MAINT = "maintenance"
+
+
+class Mode(enum.Enum):
+    IMAGE = 1
+    MAINT = 2
 
 
 logging.basicConfig(level=logging.INFO)
