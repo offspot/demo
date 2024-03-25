@@ -9,7 +9,6 @@ import argparse
 import hashlib
 import http
 import logging
-import subprocess
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -17,16 +16,16 @@ from typing import NamedTuple
 
 import requests
 
-from offspot_demo.__about__ import __version__
 from offspot_demo.constants import (
     DOCKER_LABEL_MAINT,
     IMAGE_PATH,
     TARGET_DIR,
     Mode,
-    get_logger,
+    logger,
 )
 from offspot_demo.prepare import prepare_image
 from offspot_demo.toggle import toggle_demo
+from offspot_demo.utils import fail
 from offspot_demo.utils.image import (
     attach_to_device,
     detach_device,
@@ -36,15 +35,9 @@ from offspot_demo.utils.image import (
     mount_on,
     unmount,
 )
+from offspot_demo.utils.process import run_command
 
 ONE_MIB = 2**20
-
-logger = get_logger("deploy")
-
-
-def fail(message: str = "An error occured", code: int = 1) -> int:
-    logger.error(message)
-    return code
 
 
 def is_url_correct(url: str) -> bool:
@@ -56,7 +49,7 @@ def is_url_correct(url: str) -> bool:
 def prune_docker():
     """Remove all containers and images not associated with maintenance mode"""
     # purge all containers except maint-labeled ones
-    if subprocess.run(
+    if run_command(
         [
             "/usr/bin/docker",
             "container",
@@ -64,13 +57,12 @@ def prune_docker():
             "--force",
             "--filter",
             f"label!={DOCKER_LABEL_MAINT}",
-        ],
-        check=False,
+        ]
     ).returncode:
         logger.warning("Failed to prune containers")
 
     # purge all containers except maint-labeled ones
-    if subprocess.run(
+    if run_command(
         [
             "/usr/bin/docker",
             "image",
@@ -78,8 +70,7 @@ def prune_docker():
             "--force",
             "--filter",
             f"label!={DOCKER_LABEL_MAINT}",
-        ],
-        check=False,
+        ]
     ).returncode:
         logger.warning("Failed to prune images")
 
@@ -177,7 +168,7 @@ def download_file_into(url: str, dest: Path, digest: S3CompatibleETag) -> int:
         if digest.is_singlepart:
             args += ["--checksum", digest.checksum]
         args += [url]
-        aria2 = subprocess.run(args, check=False)
+        aria2 = run_command(args)
 
         if aria2.returncode != 0:
             logger.error("Failed to download with aria2c: {aria2.returncode}")
@@ -308,11 +299,13 @@ def set_maint_mode() -> int:
 
 def entrypoint():
     parser = argparse.ArgumentParser(
-        prog="demo-deploy", description="Deploy an offspot demo from an Image URL"
+        prog="demo-deploy",
+        description="Deploy an offspot demo from an Image URL",
+        epilog="URL comes from either auto-image JSON "  # noqa: ISC003
+        + "or Imager Service email. "
+        + "https://org-kiwix-hotspot-cardshop-download.s3.us-west-1.wasabisys.com/"
+        + "xxxxx.img",
     )
-
-    parser.add_argument("-D", "--debug", action="store_true", dest="debug")
-    parser.add_argument("-V", "--version", action="version", version=__version__)
 
     parser.add_argument(
         "--reuse-image",
@@ -327,16 +320,13 @@ def entrypoint():
         help="Imager Service-created Image URL",
     )
 
-    # kwargs = dict(parser.parse_args()._get_kwargs())
     args = parser.parse_args()
-    if args.debug:
-        logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.DEBUG)
 
     try:
         sys.exit(deploy_url(url=args.url, reuse_image=args.reuse_image))
     except Exception as exc:
-        if args.debug:
-            logger.exception(exc)
+        logger.exception(exc)
         logger.critical(str(exc))
         sys.exit(1)
 

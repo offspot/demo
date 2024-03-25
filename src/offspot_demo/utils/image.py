@@ -4,10 +4,8 @@ import os
 import pathlib
 import subprocess
 
-from offspot_demo.constants import get_logger
+from offspot_demo.constants import logger
 from offspot_demo.utils import get_environ
-
-logger = get_logger("deploy")  # reusing deploy logger to get its level
 
 
 def only_on_debug() -> bool:
