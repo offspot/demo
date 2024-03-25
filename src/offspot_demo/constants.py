@@ -5,13 +5,12 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from offspot_demo.__about__ import NAME as PROJECT_NAME
+from offspot_demo.__about__ import NAME
 
 OFFSPOT_IMAGE_ID = "offspot-demo"
 OFFSPOT_IMAGE_URL = f"https://api.imager.kiwix.org/auto-images/{OFFSPOT_IMAGE_ID}/json"
 TARGET_DIR = Path(os.getenv("TARGET_DIR", "/data"))
 IMAGE_PATH = Path(os.getenv("IMAGE_PATH", "/demo/image.img"))
-PREPARED_FLAG_PATH = TARGET_DIR / "prepared.ok"
 
 FQDN = os.getenv("OFFSPOT_DEMO_FQDN", "demo.hostpot.kiwix.org")
 
@@ -38,6 +37,8 @@ STARTUP_DURATION = 10
 # in order not to be purged by deploy
 DOCKER_LABEL_MAINT = "maintenance"
 
+OCI_PLATFORM = os.getenv("OCI_PLATFORM", "linux/amd64")
+
 
 class Mode(enum.Enum):
     IMAGE = 1
@@ -45,7 +46,4 @@ class Mode(enum.Enum):
 
 
 logging.basicConfig(level=logging.INFO)
-
-
-def get_logger(name: str | None) -> logging.Logger:
-    return logging.getLogger(PROJECT_NAME if not name else f"{PROJECT_NAME}/{name}")
+logger = logging.getLogger(NAME)
