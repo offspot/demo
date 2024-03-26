@@ -52,9 +52,9 @@ def check_and_deploy():
         logger.info("Image has not been updated")
         return
     logger.info(f"Starting demo deployment with {new_deploy_url}")
-    deploy_url(url=new_deploy_url, reuse_image=False)
-    logger.info("Deploy OK, persisting last image url")
-    LAST_IMAGE_DEPLOYED_PATH.write_text(new_deploy_url)
+    if deploy_url(url=new_deploy_url, reuse_image=False) == 0:
+        logger.info("Deploy OK, persisting last image url")
+        LAST_IMAGE_DEPLOYED_PATH.write_text(new_deploy_url)
 
 
 def entrypoint():
