@@ -5,11 +5,8 @@ Limitations:
 - Image must be Imager-service-created: have its data in a 3rd ext4 partition
 """
 
-import argparse
 import hashlib
 import http
-import logging
-import sys
 from contextlib import ExitStack
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -311,41 +308,3 @@ def unmount_detach_release() -> int:
 def set_maint_mode() -> int:
     """change mode to maintenance mode (used as cleanup)"""
     return toggle_demo(Mode.MAINT)
-
-
-def entrypoint():
-    parser = argparse.ArgumentParser(
-        prog="demo-deploy",
-        description="Deploy an offspot demo from an Image URL",
-        epilog="URL comes from either auto-image JSON "  # noqa: ISC003
-        + "or Imager Service email. "
-        + "https://org-kiwix-hotspot-cardshop-download.s3.us-west-1.wasabisys.com/"
-        + "xxxxx.img",
-    )
-
-    parser.add_argument(
-        "--reuse-image",
-        action="store_true",
-        dest="reuse_image",
-        default=False,
-        help="[dev] reuse already downloaded image instead of downloading",
-    )
-
-    parser.add_argument(
-        dest="url",
-        help="Imager Service-created Image URL",
-    )
-
-    args = parser.parse_args()
-    logger.setLevel(logging.DEBUG)
-
-    try:
-        sys.exit(deploy_url(url=args.url, reuse_image=args.reuse_image))
-    except Exception as exc:
-        logger.exception(exc)
-        logger.critical(str(exc))
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    sys.exit(entrypoint())
