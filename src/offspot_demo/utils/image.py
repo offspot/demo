@@ -38,15 +38,16 @@ def get_loopdev() -> str:
 
 def get_losetup() -> list[dict[str, str | int]]:
     """list of devices returned by losetup from, JSON output"""
-    return json.loads(
-        subprocess.run(
+    output = subprocess.run(
             ["/usr/bin/env", "losetup", "--json"],
             check=True,
             capture_output=True,
             text=True,
             env=get_environ(),
         ).stdout.strip()
-    )["loopdevices"]
+    if not output:
+        return []
+    return json.loads(output)["loopdevices"]
 
 
 def is_loopdev_free(loop_dev: str):
