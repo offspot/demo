@@ -1,5 +1,5 @@
 # FQDN which will be used by the demo, e.g. demo.hotspot.kiwix.org
-OFFSPOT_DEMO_FQDN="demo.hostpot.kiwix.org"
+OFFSPOT_DEMO_FQDN="demo.hotspot.kiwix.org"
 
 # URL of the Image to watch / deploy (either autoimage URL or email URL)
 OFFSPOT_IMAGE_URL="https://api.imager.kiwix.org/auto-images/offspot-demo/json"

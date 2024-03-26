@@ -88,4 +88,4 @@ def stop_systemd_unit(unit_fullname: str):
 def enable_systemd_unit(unit_fullname: str):
     """Enables a systemd unit, based on its fullname e.g. my-timer.timer"""
 
-    run_command(["systemctl", "stop", "--no-pager", unit_fullname])
+    run_command(["systemctl", "enable", "--no-pager", unit_fullname])
