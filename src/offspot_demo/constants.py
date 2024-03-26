@@ -14,7 +14,7 @@ OFFSPOT_IMAGE_URL = os.getenv(
 )
 TARGET_DIR = Path(os.getenv("TARGET_DIR", "/data"))
 IMAGE_PATH = Path(os.getenv("IMAGE_PATH", "/demo/image.img"))
-LAST_IMAGE_DEPLOYED_PATH = TARGET_DIR / "last_image"
+LAST_IMAGE_DEPLOYED_PATH = Path("/demo/last_image")
 
 FQDN = os.getenv("OFFSPOT_DEMO_FQDN", "demo.hostpot.kiwix.org")
 
