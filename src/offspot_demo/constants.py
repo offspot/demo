@@ -17,6 +17,7 @@ IMAGE_PATH = Path(os.getenv("IMAGE_PATH", "/demo/image.img"))
 LAST_IMAGE_DEPLOYED_PATH = Path("/demo/last_image")
 
 FQDN = os.getenv("OFFSPOT_DEMO_FQDN", "demo.hostpot.kiwix.org")
+OFFSPOT_DEMO_TLS_EMAIL = os.getenv("OFFSPOT_DEMO_TLS_EMAIL", "dev@kiwix.org")
 
 SRC_PATH = Path(__file__).parent
 

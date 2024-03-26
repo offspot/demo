@@ -13,7 +13,13 @@ except ImportError:
     # we don't NEED cython ext but it's faster so use it if avail.
     from yaml import Dumper, SafeLoader
 
-from offspot_demo.constants import FQDN, OCI_PLATFORM, TARGET_DIR, logger
+from offspot_demo.constants import (
+    FQDN,
+    OCI_PLATFORM,
+    OFFSPOT_DEMO_TLS_EMAIL,
+    TARGET_DIR,
+    logger,
+)
 from offspot_demo.utils import fail, is_root
 from offspot_demo.utils.process import run_command
 
@@ -169,6 +175,14 @@ def prepare_image(target_dir: Path) -> int:
         for key, value in list(service.get("environment", {}).items()):
             if key not in ("PROTECTED_SERVICES",):
                 service["environment"][key] = value.replace(orig_fqdn, FQDN)
+
+        if svcname == "reverse-proxy":
+            service["environment"]["DEMO_TLS_EMAIL"] = OFFSPOT_DEMO_TLS_EMAIL
+            service["environment"]["IS_ONLINE_DEMO"] = "true"
+
+        # temp hack
+        if svcname == "reverse-proxy" and service["image"].endswith(":1.7"):
+            service["image"] = service["image"].replace(":1.7", ":1.8")
 
     # ATM we only support services
     for key in ("networks", "volumes", "configs", "secrets"):
