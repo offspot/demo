@@ -12,3 +12,6 @@ IMAGE_PATH="/demo/image.img"
 
 # OCI plateform to use (by default, offspot is linux/aarch64 but usually demo will run on linux/amd64)
 OCI_PLATFORM="linux/amd64"
+
+# Email adress for acme to receive notifications about expiring/expired certificates
+OFFSPOT_DEMO_TLS_EMAIL="dev@kiwix.org"

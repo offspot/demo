@@ -1,4 +1,5 @@
 {$OFFSPOT_DEMO_FQDN} {
+    tls {$OFFSPOT_DEMO_TLS_EMAIL}
     file_server {
         root /app
     }
