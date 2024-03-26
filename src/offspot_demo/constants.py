@@ -8,7 +8,10 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from offspot_demo.__about__ import NAME
 
 OFFSPOT_IMAGE_ID = "offspot-demo"
-OFFSPOT_IMAGE_URL = f"https://api.imager.kiwix.org/auto-images/{OFFSPOT_IMAGE_ID}/json"
+OFFSPOT_IMAGE_URL = os.getenv(
+    "OFFSPOT_IMAGE_URL",
+    f"https://api.imager.kiwix.org/auto-images/{OFFSPOT_IMAGE_ID}/json",
+)
 TARGET_DIR = Path(os.getenv("TARGET_DIR", "/data"))
 IMAGE_PATH = Path(os.getenv("IMAGE_PATH", "/demo/image.img"))
 LAST_IMAGE_DEPLOYED_PATH = TARGET_DIR / "last_image"
