@@ -125,6 +125,15 @@ def prepare_image(target_dir: Path) -> int:
                 and service["image"].startswith("ghcr.io/offspot/reverse-proxy:")
             ):
                 continue
+
+            # metrics shares this with reverse-proxy
+            if (
+                svcname == "metrics"
+                and volume["source"] == "/var/log"
+                and service["image"].startswith("ghcr.io/offspot/metrics:")
+            ):
+                continue
+
             # other volumes are not accepted and thus removed
             service["volumes"].remove(volume)
 
