@@ -150,3 +150,4 @@ Kiwix is running a demo instance at http://demo.hotspot.kiwix.org
 - Add an FAQ/doc for end-users (in GH for now)
 - Do not retry to deploy the same failing image over-and-over every "watcher interval" (15 minutes)
 - Implement a healthcheck endpoint (offspot services + demo watcher/deploy, with details like in imager-service https://imager.kiwix.org/health-check)
+- Use a private auto-image so users cant download this special image
