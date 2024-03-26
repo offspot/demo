@@ -64,7 +64,7 @@ This repository contains various modules and scripts useful to setup / update th
 ### toggle module/script
 
 ```sh
-offspot-toggle [image|maint]
+demo-toggle [image|maint]
 ```
 
 - stop docker-compose
@@ -74,7 +74,7 @@ offspot-toggle [image|maint]
 ### deploy module/script
 
 ```sh
-deploy-demo-for http://xxxxx/xyz.img
+demo-deploy http://xxxxx/xyz.img
 ```
 
 - check URL
@@ -94,7 +94,7 @@ deploy-demo-for http://xxxxx/xyz.img
 ### prepare module/script
 
 ```sh
-offspot-prepare /data
+demo-prepare /data
 ```
 
 - check if already prepared via `/data/prepared.ok`
