@@ -18,7 +18,6 @@ from offspot_demo.utils.systemd import (
     SystemdNotLoadedError,
     SystemdNotRunningError,
     check_systemd_service,
-    start_systemd_unit,
     stop_systemd_unit,
 )
 
@@ -84,7 +83,7 @@ def entrypoint():
         dest="mode",
         help="New target mode, either maint or image",
         default="maint",
-        choices=[m.lower() for m  in Mode.__members__.keys()],
+        choices=[m.lower() for m in Mode.__members__.keys()],
     )
 
     args = parser.parse_args()
