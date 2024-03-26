@@ -18,6 +18,7 @@ from offspot_demo.utils.systemd import (
     SystemdNotLoadedError,
     SystemdNotRunningError,
     check_systemd_service,
+    start_systemd_unit,
     stop_systemd_unit,
 )
 
@@ -39,6 +40,7 @@ def toggle_demo(mode: Mode) -> int:
         DOCKER_COMPOSE_SYMLINK_PATH.symlink_to(DOCKER_COMPOSE_MAINT_PATH)
 
     logger.info("Starting systemd unit")
+    start_systemd_unit(systemd_unit_fullname)
 
     logger.info(
         f"Sleeping {STARTUP_DURATION} seconds to check system status still ok after a"
