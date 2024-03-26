@@ -1,17 +1,64 @@
+from time import sleep
+
 from offspot_demo.constants import (
     DOCKER_COMPOSE_IMAGE_PATH,
+    DOCKER_COMPOSE_MAINT_PATH,
     DOCKER_COMPOSE_SYMLINK_PATH,
+    STARTUP_DURATION,
+    SYSTEMD_OFFSPOT_UNIT_NAME,
     Mode,
     logger,
 )
-
-
-def entrypoint():
-    logger.info("Hello from toggle")
+from offspot_demo.utils import fail
+from offspot_demo.utils.systemd import (
+    SystemdNotEnabledError,
+    SystemdNotLoadedError,
+    SystemdNotRunningError,
+    check_systemd_service,
+    start_systemd_unit,
+    stop_systemd_unit,
+)
 
 
 def toggle_demo(mode: Mode) -> int:
     logger.info(f"toggle-demo {mode=}")
+
+    systemd_unit_fullname = f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"
+
+    logger.info("Stopping systemd unit")
+    stop_systemd_unit(systemd_unit_fullname)
+
+    logger.info("Updating symlink")
+
+    DOCKER_COMPOSE_SYMLINK_PATH.unlink(missing_ok=True)
+    if mode == Mode.IMAGE:
+        DOCKER_COMPOSE_SYMLINK_PATH.symlink_to(DOCKER_COMPOSE_IMAGE_PATH)
+    else:
+        DOCKER_COMPOSE_SYMLINK_PATH.symlink_to(DOCKER_COMPOSE_MAINT_PATH)
+
+    logger.info("Starting systemd unit")
+    start_systemd_unit(systemd_unit_fullname)
+
+    logger.info(
+        f"Sleeping {STARTUP_DURATION} seconds to check system status still ok after a"
+        " while"
+    )
+    sleep(STARTUP_DURATION)
+
+    logger.info("Checking systemd unit is still running")
+    try:
+        check_systemd_service(
+            unit_fullname=f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service",
+            check_enabled=True,
+            check_running=True,
+        )
+    except SystemdNotLoadedError as exc:
+        return fail(f"systemd unit not loaded properly:\n{exc.stdout}")
+    except SystemdNotRunningError as exc:
+        return fail(f"systemd unit not running:\n{exc.stdout}")
+    except SystemdNotEnabledError as exc:
+        return fail(f"systemd unit not enabled:\n{exc.stdout}")
+
     return 0
 
 
