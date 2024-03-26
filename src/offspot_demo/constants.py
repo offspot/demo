@@ -1,14 +1,16 @@
+import enum
+import logging
 import os
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from offspot_demo.__about__ import NAME
+
 OFFSPOT_IMAGE_ID = "offspot-demo"
 OFFSPOT_IMAGE_URL = f"https://api.imager.kiwix.org/auto-images/{OFFSPOT_IMAGE_ID}/json"
-
-TARGET_DIR = Path("/host/data")
-IMAGE_PATH = Path("/host/demo/image.img")
-PREPARED_FLAG_PATH = TARGET_DIR / "prepared.ok"
+TARGET_DIR = Path(os.getenv("TARGET_DIR", "/data"))
+IMAGE_PATH = Path(os.getenv("IMAGE_PATH", "/demo/image.img"))
 
 FQDN = os.getenv("OFFSPOT_DEMO_FQDN", "demo.hostpot.kiwix.org")
 
@@ -30,3 +32,18 @@ JINJA_ENV = Environment(
 # Expected duration for the service startup ; scripts use this to pause and check that
 # service is still up after this duration
 STARTUP_DURATION = 10
+
+# maintenance container and images must be labeled with this
+# in order not to be purged by deploy
+DOCKER_LABEL_MAINT = "maintenance"
+
+OCI_PLATFORM = os.getenv("OCI_PLATFORM", "linux/amd64")
+
+
+class Mode(enum.Enum):
+    IMAGE = 1
+    MAINT = 2
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(NAME)
