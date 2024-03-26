@@ -113,3 +113,10 @@ rm -f get-pip.py
 
 # check pip version
 pip --version
+
+# install aria2 static binary
+wget -O /tmp/aria2.zip https://github.com/abcfy2/aria2-static-build/releases/download/1.37.0/aria2-x86_64-linux-musl_libressl_static.zip \
+	&& unzip -d /tmp /tmp/aria2.zip \
+	&& mv /tmp/aria2c /usr/local/bin \
+	&& rm /tmp/aria2.zip \
+	&& aria2c -v
