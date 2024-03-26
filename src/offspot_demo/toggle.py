@@ -40,7 +40,6 @@ def toggle_demo(mode: Mode) -> int:
         DOCKER_COMPOSE_SYMLINK_PATH.symlink_to(DOCKER_COMPOSE_MAINT_PATH)
 
     logger.info("Starting systemd unit")
-    start_systemd_unit(systemd_unit_fullname)
 
     logger.info(
         f"Sleeping {STARTUP_DURATION} seconds to check system status still ok after a"
@@ -85,20 +84,14 @@ def entrypoint():
         dest="mode",
         help="New target mode, either maint or image",
         default="maint",
+        choices=[m.lower() for m  in Mode.__members__.keys()],
     )
 
     args = parser.parse_args()
     logger.setLevel(logging.DEBUG)
 
     try:
-        if args.mode == "image":
-            mode = Mode.IMAGE
-        elif args.mode == "maint":
-            mode = Mode.MAINT
-        else:
-            raise Exception(
-                f"Unsupported mode: {args.mode}, must be either image or maint"
-            )
+        mode = Mode[args.mode.upper()]
         sys.exit(toggle_demo(mode=mode))
     except Exception as exc:
         logger.exception(exc)
