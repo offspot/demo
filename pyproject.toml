@@ -171,8 +171,6 @@ ignore = [
   "S603",
   # Ignore complexity
   "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
-  # Allow print command, at least for the PoC
-  "T201"
 ]
 unfixable = [
   # Don't touch unused imports

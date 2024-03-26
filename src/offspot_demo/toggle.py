@@ -2,15 +2,16 @@ from offspot_demo.constants import (
     DOCKER_COMPOSE_IMAGE_PATH,
     DOCKER_COMPOSE_SYMLINK_PATH,
     Mode,
+    logger,
 )
 
 
 def entrypoint():
-    print("Hello from toggle")
+    logger.info("Hello from toggle")
 
 
 def toggle_demo(mode: Mode) -> int:
-    print(f"toggle-demo {mode=}")
+    logger.info(f"toggle-demo {mode=}")
     return 0
 
 

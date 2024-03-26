@@ -11,6 +11,7 @@ from offspot_demo.constants import (
     logger,
 )
 from offspot_demo.deploy import deploy_url
+from offspot_demo.utils import fail, is_root
 
 
 def get_new_deploy_url() -> str | None:
@@ -41,6 +42,8 @@ def get_new_deploy_url() -> str | None:
 
 def check_and_deploy():
     """Check if a new image has to be deployed, and deploy it"""
+    if not is_root():
+        return fail("must be root", 1)
     # create folder to store LAST_IMAGE_DEPLOYED file
     LAST_IMAGE_DEPLOYED_PATH.parent.mkdir(parents=True, exist_ok=True)
     logger.info("Checking for new image")
