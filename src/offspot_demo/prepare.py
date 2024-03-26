@@ -191,6 +191,8 @@ def prepare_image(target_dir: Path) -> int:
 
     # pull all OCI images from oci_images
     for entry in image_yaml.get("oci_images", []):
+        if entry["ident"] == "ghcr.io/offspot/reverse-proxy:1.7":
+            entry["ident"] = "ghcr.io/offspot/reverse-proxy:1.8"
         logger.info(f"> Pulling OCI Image {entry['ident']}")
         docker_pull(entry["ident"])
 
