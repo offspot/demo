@@ -41,7 +41,10 @@ dev = [
 ]
 
 [project.scripts]
+demo-deploy = "offspot_demo.deploy:entrypoint"
+demo-prepare = "offspot_demo.prepare:entrypoint"
 demo-setup = "offspot_demo.setup:entrypoint"
+demo-toggle = "offspot_demo.toggle:entrypoint"
 demo-watcher = "offspot_demo.watcher:entrypoint"
 
 [tool.hatch.version]

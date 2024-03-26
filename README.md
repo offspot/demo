@@ -56,18 +56,22 @@ This repository contains various scripts useful to setup / update the demo
 - check if target URL has changed
 - call `deploy-script` if it did, otherwise sleeps
 
-#### toggle module
+### toggle script
 
-Toggle from image to maint and vice-versa
+```sh
+toggle-compose [image|maint]
+```
 
 - check symlink for active one (and docker ps?)
 - down docker-compose
 - change symlink
 - up docker-compose
 
-#### deploy module
+### deploy script
 
-Deploy an image URL
+```sh
+deploy-demo-for http://xxxxx/xyz.img
+```
 
 - check URL
 - `toggle-compose maint`
@@ -80,9 +84,11 @@ Deploy an image URL
 - `toggle-compose image`
 
 
-#### prepare module
+### prepare script
 
-Prepare an image for local execution
+```sh
+prepare-image /demo/image.img
+```
 
 - setup loop-device
 - mount part3 onto `/data` (allows reusing all fs paths directly)

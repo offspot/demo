@@ -1,3 +1,6 @@
+import argparse
+import logging
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +13,7 @@ except ImportError:
     # we don't NEED cython ext but it's faster so use it if avail.
     from yaml import Dumper, SafeLoader
 
-from offspot_demo.constants import FQDN, OCI_PLATFORM, logger
+from offspot_demo.constants import FQDN, OCI_PLATFORM, TARGET_DIR, logger
 from offspot_demo.utils import fail, is_root
 from offspot_demo.utils.process import run_command
 
@@ -173,3 +176,29 @@ def prepare_image(target_dir: Path) -> int:
 
     preapred_ok_path.touch()
     return 0
+
+
+def entrypoint():
+    parser = argparse.ArgumentParser(
+        prog="demo-prepare", description="Prepare deployment from mounted image folder"
+    )
+
+    parser.add_argument(
+        dest="target_dir",
+        help="Path to the image's third partition, to prepare from",
+        default=str(TARGET_DIR),
+    )
+
+    args = parser.parse_args()
+    logger.setLevel(logging.DEBUG)
+
+    try:
+        sys.exit(prepare_image(target_dir=Path(args.target_dir).expanduser().resolve()))
+    except Exception as exc:
+        logger.exception(exc)
+        logger.critical(str(exc))
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    sys.exit(entrypoint())
