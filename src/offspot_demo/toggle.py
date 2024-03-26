@@ -1,3 +1,6 @@
+import argparse
+import logging
+import sys
 from time import sleep
 
 from offspot_demo.constants import (
@@ -71,3 +74,37 @@ def get_mode() -> Mode:
         if DOCKER_COMPOSE_SYMLINK_PATH.resolve() == DOCKER_COMPOSE_IMAGE_PATH
         else Mode.MAINT
     )
+
+
+def entrypoint():
+    parser = argparse.ArgumentParser(
+        prog="demo-toggle", description="Toggle between maint and image modes"
+    )
+
+    parser.add_argument(
+        dest="mode",
+        help="New target mode, either maint or image",
+        default="maint",
+    )
+
+    args = parser.parse_args()
+    logger.setLevel(logging.DEBUG)
+
+    try:
+        if args.mode == "image":
+            mode = Mode.IMAGE
+        elif args.mode == "maint":
+            mode = Mode.MAINT
+        else:
+            raise Exception(
+                f"Unsupported mode: {args.mode}, must be either image or maint"
+            )
+        sys.exit(toggle_demo(mode=mode))
+    except Exception as exc:
+        logger.exception(exc)
+        logger.critical(str(exc))
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    sys.exit(entrypoint())
