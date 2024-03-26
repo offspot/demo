@@ -39,12 +39,12 @@ def get_loopdev() -> str:
 def get_losetup() -> list[dict[str, str | int]]:
     """list of devices returned by losetup from, JSON output"""
     output = subprocess.run(
-            ["/usr/bin/env", "losetup", "--json"],
-            check=True,
-            capture_output=True,
-            text=True,
-            env=get_environ(),
-        ).stdout.strip()
+        ["/usr/bin/env", "losetup", "--json"],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=get_environ(),
+    ).stdout.strip()
     if not output:
         return []
     return json.loads(output)["loopdevices"]
