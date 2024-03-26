@@ -127,8 +127,10 @@ Kiwix is running a demo instance at http://demo.hotspot.kiwix.org
 - node-like setup with bastion
 - docker install (comes with compose)
 - python install (3.12) + venv
+- few apt packages: mount coreutils aria2
+  - `apt install -y mount coreutils aria2`
 - this project installed somewhere
-  - pip install git+https://github.com/offspot/demo@main
+  - `pip install git+https://github.com/offspot/demo@main`
 
 ## Next
 
