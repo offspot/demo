@@ -1,7 +1,6 @@
 import argparse
 import logging
 import shutil
-import subprocess
 import sys
 from time import sleep
 
@@ -18,6 +17,16 @@ from offspot_demo.constants import (
 )
 from offspot_demo.utils import fail, is_root
 from offspot_demo.utils.process import run_command
+from offspot_demo.utils.systemd import (
+    SystemdNotEnabledError,
+    SystemdNotLoadedError,
+    SystemdNotRunningError,
+    SystemdNotWaitingError,
+    check_systemd_service,
+    enable_systemd_unit,
+    start_systemd_unit,
+    stop_systemd_unit,
+)
 
 
 def render_maint_docker_compose():
@@ -56,52 +65,48 @@ def install_symlink():
     DOCKER_COMPOSE_SYMLINK_PATH.symlink_to(DOCKER_COMPOSE_MAINT_PATH)
 
 
-def check_systemd_service(
+def setup_check_systemd_service(
     unit_fullname: str,
-    ok_return_codes: list[int] | None = None,
     *,
     check_running: bool = False,
     check_waiting: bool = False,
     check_enabled: bool = False,
-) -> subprocess.CompletedProcess[str]:
+) -> None:
     """Check status of the systemd unit
 
     By default, check at least that the unit is loaded properly (i.e. parsing is ok)
     If check_running is True, it also checks that the unit is running
     If check_enabled is True, it also checks that the unit is enabled
+    If check_waiting is True, it also checks that the unit is waiting
     """
-    status = run_command(
-        [
-            "systemctl",
-            "status",
-            "--no-pager",
-            unit_fullname,
-        ],
-        ok_return_codes=ok_return_codes,
-    )
-    if "Loaded: loaded" not in status.stdout:
-        logger.error(f"systemd unit not loaded properly:\n{status.stdout}")
-        logger.error(status.stdout)
+
+    try:
+        check_systemd_service(
+            unit_fullname=unit_fullname,
+            check_running=check_running,
+            check_enabled=check_enabled,
+            check_waiting=check_waiting,
+        )
+    except SystemdNotLoadedError as exc:
+        logger.error(f"systemd unit not loaded properly:\n{exc.stdout}")
         sys.exit(2)
-    if check_running:
-        if "Active: active (running)" not in status.stdout:
-            logger.error(f"systemd unit is not running:\n{status.stdout}")
-            sys.exit(3)
-        else:
-            logger.info("\tsystemd unit is running")
-    if check_waiting:
-        if "Active: active (waiting)" not in status.stdout:
-            logger.error(f"systemd unit is not waiting:\n{status.stdout}")
-            sys.exit(4)
-        else:
-            logger.info("\tsystemd unit is waiting")
+    except SystemdNotRunningError as exc:
+        logger.error(f"systemd unit not running:\n{exc.stdout}")
+        sys.exit(3)
+    except SystemdNotWaitingError as exc:
+        logger.error(f"systemd unit not waiting:\n{exc.stdout}")
+        sys.exit(4)
+    except SystemdNotEnabledError as exc:
+        logger.error(f"systemd unit not enabled:\n{exc.stdout}")
+        sys.exit(5)
+
+    logger.info("\tsystemd unit is properly loaded")
     if check_enabled:
-        if "; enabled; " not in status.stdout:
-            logger.error(f"systemd unit is not enabled:\n{status.stdout}")
-            sys.exit(5)
-        else:
-            logger.info("\tsystemd unit is enabled")
-    return status
+        logger.info("\tsystemd unit is enabled")
+    if check_running:
+        logger.info("\tsystemd unit is running")
+    if check_waiting:
+        logger.info("\tsystemd unit is waiting")
 
 
 def install_systemd_file(unit_fullname: str):
@@ -119,53 +124,35 @@ def setup_systemd():
     install_systemd_file(unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.timer")
     install_systemd_file(unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.service")
 
-    logger.info("Checking systemd units")
-    check_systemd_service(
-        unit_fullname=f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service", ok_return_codes=[0, 3]
-    )
-    check_systemd_service(
-        unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.timer", ok_return_codes=[0, 3]
-    )
-    check_systemd_service(
-        unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.service", ok_return_codes=[0, 3]
-    )
+    logger.info("Checking systemd units are loaded properly")
+    setup_check_systemd_service(unit_fullname=f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service")
+    setup_check_systemd_service(unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.timer")
+    setup_check_systemd_service(unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.service")
 
     logger.info("Stopping systemd units (if already started)")
-    run_command(
-        ["systemctl", "stop", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"],
-        ok_return_codes=[0, 5],
-    )
+    stop_systemd_unit(f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service")
+    stop_systemd_unit(f"{SYSTEMD_WATCHER_UNIT_NAME}.timer")
 
     logger.info("Reload systemctl daemon")
     run_command(["systemctl", "daemon-reload"])
 
     logger.info("Enabling systemd units")
-    run_command(
-        ["systemctl", "enable", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"]
-    )
-    run_command(
-        ["systemctl", "enable", "--no-pager", f"{SYSTEMD_WATCHER_UNIT_NAME}.timer"]
-    )
+    enable_systemd_unit(f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service")
+    enable_systemd_unit(f"{SYSTEMD_WATCHER_UNIT_NAME}.timer")
 
     logger.info("Checking systemd units")
-    check_systemd_service(
+    setup_check_systemd_service(
         unit_fullname=f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service",
         check_enabled=True,
-        ok_return_codes=[0, 3],
     )
-    check_systemd_service(
+    setup_check_systemd_service(
         unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.timer",
         check_enabled=True,
-        ok_return_codes=[0, 3],
     )
 
     logger.info("Starting systemd units")
-    run_command(
-        ["systemctl", "start", "--no-pager", f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"]
-    )
-    run_command(
-        ["systemctl", "start", "--no-pager", f"{SYSTEMD_WATCHER_UNIT_NAME}.timer"]
-    )
+    start_systemd_unit(f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service")
+    start_systemd_unit(f"{SYSTEMD_WATCHER_UNIT_NAME}.timer")
 
     logger.info(
         f"Sleeping {STARTUP_DURATION} seconds to check system status still ok after a"
@@ -174,12 +161,12 @@ def setup_systemd():
     sleep(STARTUP_DURATION)
 
     logger.info("Checking systemd unit is still running")
-    check_systemd_service(
+    setup_check_systemd_service(
         unit_fullname=f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service",
         check_enabled=True,
         check_running=True,
     )
-    check_systemd_service(
+    setup_check_systemd_service(
         unit_fullname=f"{SYSTEMD_WATCHER_UNIT_NAME}.timer",
         check_enabled=True,
         check_waiting=True,
