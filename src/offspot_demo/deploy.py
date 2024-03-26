@@ -18,6 +18,7 @@ from typing import NamedTuple
 import requests
 
 from offspot_demo.constants import (
+    DEFAULT_HTTP_TIMEOUT_SECONDS,
     DOCKER_LABEL_MAINT,
     IMAGE_PATH,
     TARGET_DIR,
@@ -43,7 +44,7 @@ ONE_MIB = 2**20
 
 def is_url_correct(url: str) -> bool:
     """whether URL is reachable"""
-    with requests.get(url, timeout=5, stream=True) as resp:
+    with requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT_SECONDS, stream=True) as resp:
         return resp.status_code == http.HTTPStatus.OK
 
 
@@ -116,7 +117,7 @@ def get_checksum_from(url: str) -> S3CompatibleETag:
     Should the URL not return an ETag or Content-Length, it is assumed to not
     have a checksum."""
 
-    with requests.get(url, timeout=5, stream=True) as resp:
+    with requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT_SECONDS, stream=True) as resp:
         size = resp.headers.get("Content-Length")
         etag = resp.headers.get("ETag", "").replace('"', "").replace("'", "")
     if not size or not etag:

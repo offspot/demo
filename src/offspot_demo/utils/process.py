@@ -1,6 +1,8 @@
 import subprocess
 import sys
 
+from offspot_demo.constants import logger
+
 
 def run_command(
     command: list[str],
@@ -24,9 +26,10 @@ def run_command(
         check=False,
     )
     if process.returncode not in ok_return_codes:
-        print(f"Running command failed with code {process.returncode}")
-        print(f"Command was: {command}")
-        print("Stdout/Stderr is:")
-        print(process.stdout)
+        logger.error(
+            f"Running command failed with code {process.returncode}\n"
+            f"Command was: {command}\n"
+            f"Stdout/Stderr is:\n{process.stdout}"
+        )
         sys.exit(1)
     return process

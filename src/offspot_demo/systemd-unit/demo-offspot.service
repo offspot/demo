@@ -1,5 +1,5 @@
 [Unit]
-Description=offspot-demo
+Description=demo-offspot
 Requires=docker.service
 After=docker.service
 

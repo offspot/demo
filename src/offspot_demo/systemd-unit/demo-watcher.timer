@@ -1,0 +1,12 @@
+[Unit]
+Description=demo-watcher
+
+[Timer]
+OnBootSec=5min
+# we use OnUnitInactiveSec to ensure we do not have two concurrent deployment AND
+# we pause at least 15 minutes between every deployment (no need to run many deployment
+# in a short timeframe except for maintenance reason where it can be done manually)
+OnUnitInactiveSec=15min
+
+[Install]
+WantedBy=multi-user.target
