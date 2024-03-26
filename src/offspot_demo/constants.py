@@ -9,11 +9,11 @@ from offspot_demo.__about__ import NAME
 
 OFFSPOT_IMAGE_ID = "offspot-demo"
 OFFSPOT_IMAGE_URL = os.getenv(
-    "OFFSPOT_IMAGE_URL",
+    "OFFSPOT_DEMO_IMAGE_URL",
     f"https://api.imager.kiwix.org/auto-images/{OFFSPOT_IMAGE_ID}/json",
 )
-TARGET_DIR = Path(os.getenv("TARGET_DIR", "/data"))
-IMAGE_PATH = Path(os.getenv("IMAGE_PATH", "/demo/image.img"))
+TARGET_DIR = Path(os.getenv("OFFSPOT_DEMO_TARGET_DIR", "/data"))
+IMAGE_PATH = Path(os.getenv("OFFSPOT_DEMO_IMAGE_PATH", "/demo/image.img"))
 LAST_IMAGE_DEPLOYED_PATH = Path("/demo/last_image")
 
 FQDN = os.getenv("OFFSPOT_DEMO_FQDN", "demo.hostpot.kiwix.org")
@@ -41,7 +41,7 @@ STARTUP_DURATION = 10
 # in order not to be purged by deploy
 DOCKER_LABEL_MAINT = "maintenance"
 
-OCI_PLATFORM = os.getenv("OCI_PLATFORM", "linux/amd64")
+OCI_PLATFORM = os.getenv("OFFSPOT_DEMO_OCI_PLATFORM", "linux/amd64")
 
 
 class Mode(enum.Enum):

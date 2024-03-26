@@ -39,7 +39,7 @@ To install the demo, you have to:
   - copy the `contrib/environment` file to `/etc/demo/environment`
     - could be any other appropriate location, but then you have to modify `<src_path>/systemd-unit/demo-offspot.service`
   - customize this file as needed
-  - automatically load the environment data in your user session: `source /etc/demo/environment`
+  - automatically load the environment data in your user session: `echo "export \$(grep -v '^#' /etc/demo/environment | xargs) && env | grep OFFSPOT_DEMO" | tee /etc/profile.d/demo-env.sh`
 - setup the demo: run `demo-setup`
 
 ## Tooling

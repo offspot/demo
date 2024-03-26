@@ -2,16 +2,16 @@
 OFFSPOT_DEMO_FQDN="demo.hotspot.kiwix.org"
 
 # URL of the Image to watch / deploy (either autoimage URL or email URL)
-OFFSPOT_IMAGE_URL="https://api.imager.kiwix.org/auto-images/offspot-demo/json"
+OFFSPOT_DEMO_IMAGE_URL="https://api.imager.kiwix.org/auto-images/offspot-demo/json"
 
 # Folder where everything will be deployed
-TARGET_DIR="/data"
+OFFSPOT_DEMO_TARGET_DIR="/data"
 
 # Location of the image
-IMAGE_PATH="/demo/image.img"
+OFFSPOT_DEMO_IMAGE_PATH="/demo/image.img"
 
 # OCI plateform to use (by default, offspot is linux/aarch64 but usually demo will run on linux/amd64)
-OCI_PLATFORM="linux/amd64"
+OFFSPOT_DEMO_OCI_PLATFORM="linux/amd64"
 
 # Email adress for acme to receive notifications about expiring/expired certificates
 OFFSPOT_DEMO_TLS_EMAIL="dev@kiwix.org"
