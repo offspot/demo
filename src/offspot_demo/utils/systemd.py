@@ -11,19 +11,19 @@ class SystemdError(Exception):
 
 
 class SystemdNotRunningError(SystemdError):
-    pass
+    return_code = 3
 
 
 class SystemdNotWaitingError(SystemdError):
-    pass
+    return_code = 4
 
 
 class SystemdNotEnabledError(SystemdError):
-    pass
+    return_code = 5
 
 
 class SystemdNotLoadedError(SystemdError):
-    pass
+    return_code = 2
 
 
 def check_systemd_service(
@@ -35,14 +35,20 @@ def check_systemd_service(
 ) -> subprocess.CompletedProcess[str]:
     """Check status of the systemd unit
 
-    By default, check at least that the unit is loaded properly (i.e. parsing is ok),
-    otherwise a SystemdNotLoadedError is raised.
-    If check_running is True, it also checks that the unit is running, otherwise a
-    SystemdNotRunningError is raiase
-    If check_enabled is True, it also checks that the unit is enabled, otherwise a
-    SystemdNotEnabledError is raiase
-    If check_waiting is True, it also checks that the unit is waiting, otherwise a
-    SystemdNotWaitingError is raiase
+    The minimal check consists in ensuring that the systemd unit is properly loaded (no
+    parsing issue, no unknown parameter, ...)
+
+    Parameters:
+        unit_fullname: full name of the systemd unit to check (e.g. my-timer.timer)
+        check_running: also check that systemd unit is running
+        check_waiting: also check that systemd unit is waiting (for timers typically)
+        check_enabled: also check that systemd unit is enabled
+
+    Raises:
+        SystemdNotLoadedError: if unit is not properly loaded
+        SystemdNotRunningError: if unit is not running ; when using check_running
+        SystemdNotEnabledError: if unit is not enabled ; when using check_enabled
+        SystemdNotWaitingError: if unit is not waiting ; when using check_waiting
     """
     process = run_command(
         [

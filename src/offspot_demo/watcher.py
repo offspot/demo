@@ -22,7 +22,7 @@ def get_new_deploy_url() -> str | None:
 
     Returns None otherwise.
     """
-    if not (LAST_IMAGE_DEPLOYED_PATH).exists():
+    if not LAST_IMAGE_DEPLOYED_PATH.exists():
         last_image_fetched = None
     else:
         last_image_fetched = LAST_IMAGE_DEPLOYED_PATH.read_text()

@@ -74,10 +74,14 @@ def setup_check_systemd_service(
 ) -> None:
     """Check status of the systemd unit
 
-    By default, check at least that the unit is loaded properly (i.e. parsing is ok)
-    If check_running is True, it also checks that the unit is running
-    If check_enabled is True, it also checks that the unit is enabled
-    If check_waiting is True, it also checks that the unit is waiting
+    The minimal check consists in ensuring that the systemd unit is properly loaded (no
+    parsing issue, no unknown parameter, ...)
+
+    Parameters:
+        unit_fullname: full name of the systemd unit to check (e.g. my-timer.timer)
+        check_running: also check that systemd unit is running
+        check_waiting: also check that systemd unit is waiting (for timers typically)
+        check_enabled: also check that systemd unit is enabled
     """
 
     try:
@@ -87,18 +91,14 @@ def setup_check_systemd_service(
             check_enabled=check_enabled,
             check_waiting=check_waiting,
         )
-    except SystemdNotLoadedError as exc:
-        logger.error(f"systemd unit not loaded properly:\n{exc.stdout}")
-        sys.exit(2)
-    except SystemdNotRunningError as exc:
-        logger.error(f"systemd unit not running:\n{exc.stdout}")
-        sys.exit(3)
-    except SystemdNotWaitingError as exc:
-        logger.error(f"systemd unit not waiting:\n{exc.stdout}")
-        sys.exit(4)
-    except SystemdNotEnabledError as exc:
-        logger.error(f"systemd unit not enabled:\n{exc.stdout}")
-        sys.exit(5)
+    except (
+        SystemdNotLoadedError,
+        SystemdNotRunningError,
+        SystemdNotWaitingError,
+        SystemdNotEnabledError,
+    ) as exc:
+        logger.error(f"systemd check failed for {unit_fullname}:\n{exc.stdout}")
+        sys.exit(exc.return_code)
 
     logger.info("\tsystemd unit is properly loaded")
     if check_enabled:
