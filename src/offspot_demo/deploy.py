@@ -165,7 +165,14 @@ def download_file_into(url: str, dest: Path, digest: S3CompatibleETag) -> int:
     ) as tmpdir:
         tmp_dest = Path(tmpdir).joinpath("image.img")
 
-        args = ["aria2c", "--dir", str(tmp_dest.parent), "--out", "image.img"]
+        args = [
+            "aria2c",
+            "--dir",
+            str(tmp_dest.parent),
+            "--out",
+            "image.img",
+            "--enable-rpc",
+        ]
         # single part checksum, let aria2 handle checksum validation
         if digest.is_singlepart:
             args += ["--checksum", digest.checksum]
