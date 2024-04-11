@@ -120,3 +120,6 @@ wget -O /tmp/aria2.zip https://github.com/abcfy2/aria2-static-build/releases/dow
 	&& mv /tmp/aria2c /usr/local/bin \
 	&& rm /tmp/aria2.zip \
 	&& aria2c -v
+
+# script to “gently” terminate aria2c
+printf '#!/bin/sh\nkill -HUP $(pgrep aria2c)\n' > /usr/local/bin/stop_aria2c_processes && chmod +x /usr/local/bin/stop_aria2c_processes
