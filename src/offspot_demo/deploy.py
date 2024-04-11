@@ -172,6 +172,8 @@ def download_file_into(url: str, dest: Path, digest: S3CompatibleETag) -> int:
             "--out",
             "image.img",
             "--enable-rpc",
+            "--on-download-complete=stop_aria2c_processes",
+            "--on-download-error=stop_aria2c_processes",
         ]
         # single part checksum, let aria2 handle checksum validation
         if digest.is_singlepart:
