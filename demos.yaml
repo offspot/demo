@@ -1,0 +1,22 @@
+---
+# this file (in offspot/demo repository) is the configuration
+# for the hotspot multi demos.
+# It is periodically fecthed (every 15mn usually) and refreshes the multi-demo
+# should it has changed.
+demos:
+  - ident: preppers
+    name: Preppers Package
+  - ident: ted
+    name: TED Talks Package
+    name: Wikipedia Package
+  - ident: computers
+    alias: compsci
+    name: Computer Science Package
+  - ident: offspot-demo
+    alias: discover
+    name: Discovery showcase
+  - ident: wikipedia-en
+    alias: wikipedia
+  - ident: demo
+    alias: free
+    name: Free Package

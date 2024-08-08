@@ -3,5 +3,8 @@ Description=demo-watcher
 
 [Service]
 User=root
-ExecStart=/root/env/bin/demo-watcher
+# we execute config-watcher as a pre-command as it updates the EnvironmentFile
+# and we need update-watcher to use the new version.
+ExecStartPre=/bin/sh -c "${OFFSPOT_ENV_DIR}/bin/demo-config-watcher"
+ExecStart=/bin/sh -c "${OFFSPOT_ENV_DIR}/bin/demo-update-watcher"
 EnvironmentFile=/etc/demo/environment

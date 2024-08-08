@@ -1,0 +1,31 @@
+[Unit]
+Description=demo-multi-proxy
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=no
+RestartSec=30
+User=root
+Group=docker
+EnvironmentFile=/etc/demo/environment
+# Shutdown and remove container (if running) when unit is started
+ExecStartPre=/usr/bin/docker rm --force ${OFFSPOT_DEMO_PROXY_IMAGE_NAME}
+# Rebuild image before starting
+ExecStartPre=/usr/bin/docker build ${OFFSPOT_DEMO_SRC_DIR}/multi-proxy -t ${OFFSPOT_DEMO_PROXY_IMAGE_NAME}
+# Start container when unit is started
+ExecStart=/usr/bin/docker run --name multi-proxy \
+    --mount type=volume,source=caddy_data,target=/data \
+    --mount type=volume,source=caddy_config,target=/config \
+    -e "TLS_EMAIL=${OFFSPOT_DEMO_TLS_EMAIL}" \
+    -e "FQDN=${OFFSPOT_DEMO_FQDN}" \
+    -e "DEMOS=${OFFSPOT_DEMOS_LIST}" \
+    -e "HOST_IP=${OFFSPOT_DEMO_HOST_IP}" \
+    -e "DEBUG=1" \
+    -p 80:80 -p 443:443 \
+    ${OFFSPOT_DEMO_PROXY_IMAGE_NAME}
+# Stop and remove container when unit is stopped
+ExecStop=/usr/bin/docker rm --force ${OFFSPOT_DEMO_PROXY_IMAGE_NAME}
+
+[Install]
+WantedBy=multi-user.target

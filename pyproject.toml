@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "offspot-demo"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.11,<3.13"
 description = "Kiwix Hotspot Demo"
 readme = "README.md"
 dependencies = [
@@ -33,6 +33,7 @@ test = [
   "coverage==7.4.4",
 ]
 dev = [
+  "ipython==8.26.0",
   "pre-commit==3.6.2",
   "offspot-demo[scripts]",
   "offspot-demo[lint]",
@@ -42,10 +43,11 @@ dev = [
 
 [project.scripts]
 demo-deploy = "offspot_demo.deploy:entrypoint"
+demo-undeploy = "offspot_demo.undeploy:entrypoint"
 demo-prepare = "offspot_demo.prepare:entrypoint"
-demo-setup = "offspot_demo.setup:entrypoint"
 demo-toggle = "offspot_demo.toggle:entrypoint"
-demo-watcher = "offspot_demo.watcher:entrypoint"
+demo-config-watcher = "offspot_demo.config_watcher:entrypoint"
+demo-update-watcher = "offspot_demo.update_watcher:entrypoint"
 
 [tool.hatch.version]
 path = "src/offspot_demo/__about__.py"
@@ -190,6 +192,8 @@ ban-relative-imports = "all"
 [tool.ruff.lint.per-file-ignores]
 # Tests can use magic values, assertions, and relative imports
 "tests/**/*" = ["PLR2004", "S101", "TID252"]
+# allow prints and long lines (templates)
+"gen-server.py" = ["T201", "E501"]
 
 [tool.pytest.ini_options]
 minversion = "7.3"

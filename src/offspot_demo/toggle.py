@@ -1,46 +1,63 @@
+#!/usr/bin/env python3
+
 import argparse
 import logging
 import sys
 from time import sleep
 
+from offspot_demo import logger
 from offspot_demo.constants import (
-    DOCKER_COMPOSE_IMAGE_PATH,
-    DOCKER_COMPOSE_MAINT_PATH,
-    DOCKER_COMPOSE_SYMLINK_PATH,
+    JINJA_ENV,
+    SRC_PATH,
     STARTUP_DURATION,
-    SYSTEMD_OFFSPOT_UNIT_NAME,
     Mode,
-    logger,
 )
 from offspot_demo.utils import fail
-from offspot_demo.utils.systemd import (
-    SystemdNotEnabledError,
-    SystemdNotLoadedError,
-    SystemdNotRunningError,
-    check_systemd_service,
-    start_systemd_unit,
-    stop_systemd_unit,
-)
+from offspot_demo.utils.deployment import DEPLOYMENTS, Deployment
+from offspot_demo.utils.docker import is_demo_healthy, start_demo, stop_demo
 
 
-def toggle_demo(mode: Mode) -> int:
-    logger.info(f"toggle-demo {mode=}")
+def write_maint_compose(deployment: Deployment):
+    """Render the maintenance docker-compose to customize local stuff"""
+    logger.info("Rendering maintenance docker-compose")
+    deployment.maint_compose_path.parent.mkdir(parents=True, exist_ok=True)
+    deployment.maint_compose_path.write_text(
+        JINJA_ENV.from_string(
+            """
+services:
+  maint:
+    build: {{ src_path }}/maint-compose/
+    environment:
+      - FQDN={{ fqdn }}
+    ports:
+      - {{ http_port }}:80
 
-    systemd_unit_fullname = f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service"
+"""
+        ).render(
+            src_path=SRC_PATH, fqdn=deployment.fqdn, http_port=deployment.http_port
+        )
+    )
 
-    logger.info("Stopping systemd unit")
-    stop_systemd_unit(systemd_unit_fullname)
+
+def toggle_demo(deployment: Deployment, mode: Mode) -> int:
+    logger.info(f"toggle-demo {deployment!s} {mode=}")
+
+    if not deployment.maint_compose_installed:
+        write_maint_compose(deployment=deployment)
+
+    logger.info("Stopping compose")
+    stop_demo(deployment)
 
     logger.info("Updating symlink")
 
-    DOCKER_COMPOSE_SYMLINK_PATH.unlink(missing_ok=True)
+    deployment.compose_path.unlink(missing_ok=True)
     if mode == Mode.IMAGE:
-        DOCKER_COMPOSE_SYMLINK_PATH.symlink_to(DOCKER_COMPOSE_IMAGE_PATH)
+        deployment.compose_path.symlink_to(deployment.image_compose_path)
     else:
-        DOCKER_COMPOSE_SYMLINK_PATH.symlink_to(DOCKER_COMPOSE_MAINT_PATH)
+        deployment.compose_path.symlink_to(deployment.maint_compose_path)
 
-    logger.info("Starting systemd unit")
-    start_systemd_unit(systemd_unit_fullname)
+    logger.info("Starting compose")
+    start_demo(deployment)
 
     logger.info(
         f"Sleeping {STARTUP_DURATION} seconds to check system status still ok after a"
@@ -48,30 +65,20 @@ def toggle_demo(mode: Mode) -> int:
     )
     sleep(STARTUP_DURATION)
 
-    logger.info("Checking systemd unit is still running")
-    try:
-        check_systemd_service(
-            unit_fullname=f"{SYSTEMD_OFFSPOT_UNIT_NAME}.service",
-            check_enabled=True,
-            check_running=True,
-        )
-    except SystemdNotLoadedError as exc:
-        return fail(f"systemd unit not loaded properly:\n{exc.stdout}")
-    except SystemdNotRunningError as exc:
-        return fail(f"systemd unit not running:\n{exc.stdout}")
-    except SystemdNotEnabledError as exc:
-        return fail(f"systemd unit not enabled:\n{exc.stdout}")
+    logger.info("Checking compose is still running")
+    if not is_demo_healthy(deployment):
+        return fail("Compose is not properly running")
 
     return 0
 
 
-def get_mode() -> Mode:
+def get_mode(deployment: Deployment) -> Mode:
     """modes currently active"""
     # WARN: symlink doesn't tell whether compose is running or not
     # and if it was launched with a different one
     return (
         Mode.IMAGE
-        if DOCKER_COMPOSE_SYMLINK_PATH.resolve() == DOCKER_COMPOSE_IMAGE_PATH
+        if deployment.compose_path.resolve() == deployment.image_compose_path
         else Mode.MAINT
     )
 
@@ -80,6 +87,8 @@ def entrypoint():
     parser = argparse.ArgumentParser(
         prog="demo-toggle", description="Toggle between maint and image modes"
     )
+
+    parser.add_argument(dest="ident", help="Deployment/image identifier")
 
     parser.add_argument(
         dest="mode",
@@ -93,7 +102,7 @@ def entrypoint():
 
     try:
         mode = Mode[args.mode.upper()]
-        sys.exit(toggle_demo(mode=mode))
+        sys.exit(toggle_demo(deployment=DEPLOYMENTS[args.ident], mode=mode))
     except Exception as exc:
         logger.exception(exc)
         logger.critical(str(exc))

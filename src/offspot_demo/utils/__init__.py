@@ -1,6 +1,8 @@
 import os
+import platform
 
-from offspot_demo.constants import logger
+from offspot_demo import logger
+from offspot_demo.constants import DEBUG
 
 
 def fail(message: str = "An error occured", code: int = 1) -> int:
@@ -18,4 +20,4 @@ def get_environ() -> dict[str, str]:
 
 def is_root() -> bool:
     """whether running as root"""
-    return os.getuid() == 0
+    return os.getuid() == 0 or (DEBUG and platform.system() == "Darwin")

@@ -1,27 +1,19 @@
+#!/usr/bin/env python3
+
 import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Any
 
-import yaml
-
-try:
-    from yaml import CDumper as Dumper
-    from yaml import CSafeLoader as SafeLoader
-except ImportError:
-    # we don't NEED cython ext but it's faster so use it if avail.
-    from yaml import Dumper, SafeLoader
-
+from offspot_demo import logger
 from offspot_demo.constants import (
-    FQDN,
     OCI_PLATFORM,
     OFFSPOT_DEMO_TLS_EMAIL,
-    TARGET_DIR,
-    logger,
 )
 from offspot_demo.utils import fail, is_root
+from offspot_demo.utils.deployment import DEPLOYMENTS, Deployment
 from offspot_demo.utils.process import run_command
+from offspot_demo.utils.yaml import yaml_dump, yaml_load
 
 
 def docker_pull(ident: str) -> int:
@@ -44,37 +36,27 @@ def docker_pull(ident: str) -> int:
     )
 
 
-def yaml_dump(data: dict[str, Any]) -> str:
-    """YAML textual representation of data"""
-    return yaml.dump(data, Dumper=Dumper, explicit_start=True, sort_keys=False)
-
-
-def yaml_load(data: str) -> dict[str, Any]:
-    return yaml.load(data, Loader=SafeLoader)
-
-
-def prepare_image(target_dir: Path) -> int:
+def prepare_for(deployment: Deployment, *, force: bool) -> int:
     """Prepare a deployment from a mounted image path
 
     Parameters:
         target_dir: the path of a mounted 3rd partition or an offspot image
     """
-    logger.info(f"prepare-image from {target_dir!s}")
+    logger.info(f"prepare-image from {deployment.target_dir!s}")
 
     if not is_root():
         return fail("must be root", 1)
 
-    preapred_ok_path = target_dir / "prepared.ok"
-    if preapred_ok_path.exists():
+    if deployment.is_already_prepared and not force:
         return 0
 
-    dashboard_path = target_dir / "contents" / "dashboard.yaml"
-    image_yaml_path = target_dir / "image.yaml"
+    dashboard_path = deployment.target_dir / "contents" / "dashboard.yaml"
+    image_yaml_path = deployment.target_dir / "image.yaml"
 
     for fpath in (image_yaml_path, dashboard_path):
         if not fpath.exists():
             return fail(
-                f"Missing {fpath.relative_to(target_dir)} YAML. "  # noqa: ISC003
+                f"Missing {fpath.relative_to(deployment.target_dir)} YAML. "  # noqa: ISC003
                 + f"Not an Imager Service image? -- {fpath}",
                 1,
             )
@@ -86,22 +68,26 @@ def prepare_image(target_dir: Path) -> int:
     orig_fqdn = str(dashboard["metadata"]["fqdn"])
 
     # update FQDN
-    dashboard["metadata"]["fqdn"] = FQDN
+    dashboard["metadata"]["fqdn"] = deployment.fqdn
 
     # update all entries' urls
     for entry in dashboard.get("packages", []):
         if entry.get("url"):
-            entry["url"] = entry["url"].replace(orig_fqdn, FQDN)
+            entry["url"] = entry["url"].replace(orig_fqdn, deployment.fqdn)
         if entry.get("download", {}).get("url"):
-            entry["download"]["url"] = entry["download"]["url"].replace(orig_fqdn, FQDN)
+            entry["download"]["url"] = entry["download"]["url"].replace(
+                orig_fqdn, deployment.fqdn
+            )
 
     for reader in dashboard.get("readers", []):
         if reader.get("download_url"):
-            reader["download_url"] = reader["download_url"].replace(orig_fqdn, FQDN)
+            reader["download_url"] = reader["download_url"].replace(
+                orig_fqdn, deployment.fqdn
+            )
 
     for link in dashboard.get("links", []):
         if link.get("url"):
-            link["url"] = link["url"].replace(orig_fqdn, FQDN)
+            link["url"] = link["url"].replace(orig_fqdn, deployment.fqdn)
 
     # overwrite file
     dashboard_path.write_text(yaml_dump(dashboard))
@@ -109,27 +95,46 @@ def prepare_image(target_dir: Path) -> int:
     image_yaml = yaml_load(image_yaml_path.read_text())
     compose = image_yaml.get("offspot", {}).get("containers")
     if not compose:
-        return fail("Missing compose definition in image.yaml (offspor.containers)", 1)
+        return fail("Missing compose definition in image.yaml (offspot.containers)", 1)
 
-    offspot_root = Path("/data")
+    # update compose name so we can have several in parallel
+    compose["name"] = f"offspot_{deployment.ident}"
+
+    offspot_data_root = Path("/data")
+
+    subdomains: list[str] = []
 
     for svcname, service in compose.get("services", {}).items():
 
-        for volume in service.get("volumes", []):
+        # delete container_name so we can have multiple compose in parallel
+        if "container_name" in service.keys():
+            del service["container_name"]
+
+        orig_volumes = list(service.get("volumes", []))
+        service["volumes"] = []
+        for volume in orig_volumes:
+
             # we accept /data prefixed sources
-            if Path(volume["source"]).is_relative_to(offspot_root):
-                # rewrite so it works off any `target_dir` but shouldnt be necessary
-                # on prod if we use `/data` as well
+            if Path(volume["source"]).is_relative_to(offspot_data_root):
+                # rewrite so it works off any `target_dir`
                 volume["source"] = str(
-                    target_dir / Path(volume["source"]).relative_to(offspot_root)
+                    deployment.target_dir
+                    / Path(volume["source"]).relative_to(offspot_data_root)
                 )
+                service["volumes"].append(volume)
                 continue
+
             # reverse-proxy only is allowed to mount /var/log (for metrics)
             if (
                 svcname == "reverse-proxy"
                 and volume["source"] == "/var/log"
                 and service["image"].startswith("ghcr.io/offspot/reverse-proxy:")
             ):
+                volume["source"] = f"/var/log/offspot-demo_{deployment.ident}"
+                service["volumes"].append(volume)
+                Path(f"/var/log/offspot-demo_{deployment.ident}").mkdir(
+                    parents=True, exist_ok=True
+                )
                 continue
 
             # metrics shares this with reverse-proxy
@@ -138,10 +143,14 @@ def prepare_image(target_dir: Path) -> int:
                 and volume["source"] == "/var/log"
                 and service["image"].startswith("ghcr.io/offspot/metrics:")
             ):
+                volume["source"] = f"/var/log/offspot-demo_{deployment.ident}"
+                service["volumes"].append(volume)
+                Path(f"/var/log/offspot-demo_{deployment.ident}").mkdir(
+                    parents=True, exist_ok=True
+                )
                 continue
 
-            # other volumes are not accepted and thus removed
-            service["volumes"].remove(volume)
+            # other volumes are not accepted and thus removed (not added-back)
 
         # remove cap_add for all ; will break captive portal but it's OK
         if "cap_add" in service:
@@ -155,17 +164,23 @@ def prepare_image(target_dir: Path) -> int:
             if "ports" in service:
                 del service["ports"]
         else:
-            service["ports"] = ["80:80", "443:443"]
+            service["ports"] = [
+                f"{deployment.http_port}:80",
+                f"{deployment.https_port}:443",
+            ]
 
-        # only allow captive-portal to use set network_mode
-        if (
-            not (
-                svcname == "home-portal"
-                and service["image"].startswith("ghcr.io/offspot/captive-portal:")
-            )
-            and "network_mode" in service
-        ):
+        # dont allow using network_mode (captive portal with be switched to ports)
+        if "network_mode" in service:
             del service["network_mode"]
+
+        # convert captive-portal's network_mode expose to new ports
+        if svcname == "home-portal" and service["image"].startswith(
+            "ghcr.io/offspot/captive-portal:"
+        ):
+            service["ports"] = [
+                f"{deployment.http_port + 1}:80",
+                f"{deployment.https_port + 1}:443",
+            ]
 
         # allow none to be privileged ; breaks hwclock but it's OK
         if "privileged" in service:
@@ -174,15 +189,19 @@ def prepare_image(target_dir: Path) -> int:
         # replace fqdn in all environment
         for key, value in list(service.get("environment", {}).items()):
             if key not in ("PROTECTED_SERVICES",):
-                service["environment"][key] = value.replace(orig_fqdn, FQDN)
+                service["environment"][key] = value.replace(orig_fqdn, deployment.fqdn)
 
         if svcname == "reverse-proxy":
             service["environment"]["DEMO_TLS_EMAIL"] = OFFSPOT_DEMO_TLS_EMAIL
-            service["environment"]["IS_ONLINE_DEMO"] = "true"
+            service["environment"]["IS_ONLINE_DEMO"] = "false"
+            service["environment"]["FQDN"] = deployment.fqdn
+            subdomains += service["environment"]["SERVICES"].split(",")
+            subdomains += [
+                fm.split(":")[0]
+                for fm in service["environment"].get("FILES_MAPPING", "").split(",")
+            ]
 
-        # temp hack
-        if svcname == "reverse-proxy" and service["image"].endswith(":1.7"):
-            service["image"] = service["image"].replace(":1.7", ":1.8")
+    deployment.subdomains = subdomains
 
     # ATM we only support services
     for key in ("networks", "volumes", "configs", "secrets"):
@@ -197,9 +216,11 @@ def prepare_image(target_dir: Path) -> int:
         docker_pull(entry["ident"])
 
     # write new compose to partition
-    target_dir.joinpath("compose.yaml").write_text(yaml_dump(compose))
+    deployment.image_compose_path.write_text(yaml_dump(compose))
 
-    preapred_ok_path.touch()
+    logger.debug(deployment.image_compose_path.read_text())
+
+    deployment.prepared_ok_path.touch()
     return 0
 
 
@@ -208,17 +229,20 @@ def entrypoint():
         prog="demo-prepare", description="Prepare deployment from mounted image folder"
     )
 
+    parser.add_argument(dest="ident", help="Deployment/image identifier")
     parser.add_argument(
-        dest="target_dir",
-        help="Path to the image's third partition, to prepare from",
-        default=str(TARGET_DIR),
+        "--force",
+        dest="force",
+        action="store_true",
+        default=False,
+        help="Re-prepare even if already prepared",
     )
 
     args = parser.parse_args()
     logger.setLevel(logging.DEBUG)
 
     try:
-        sys.exit(prepare_image(target_dir=Path(args.target_dir).expanduser().resolve()))
+        sys.exit(prepare_for(DEPLOYMENTS[args.ident], force=args.force))
     except Exception as exc:
         logger.exception(exc)
         logger.critical(str(exc))
