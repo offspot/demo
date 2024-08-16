@@ -157,7 +157,7 @@ a:hover {
     <p>There's no demo configured at the moment 🤷‍♂️</p>
     {% endif %}
     <p>The Imager-service (“<em>Build your own</em>” option) allows you to create one such Hotspot with your own set of contents.</p>
-        <p><a class="btn btn-primary">Kiwix Hotspot Shop <i class="bi bi-bag"></i></a></p>
+        <p><a href="https://kiwix.org/en/wifi-hotspot/" class="btn btn-primary">Kiwix Hotspot Shop <i class="bi bi-bag"></i></a></p>
     </section>
   </div>
 </body>
