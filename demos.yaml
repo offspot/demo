@@ -8,15 +8,9 @@ demos:
     name: Preppers Package
   - ident: ted
     name: TED Talks Package
-    name: Wikipedia Package
   - ident: computers
     alias: compsci
     name: Computer Science Package
-  - ident: offspot-demo
-    alias: discover
-    name: Discovery showcase
   - ident: wikipedia-en
     alias: wikipedia
-  - ident: demo
-    alias: free
-    name: Free Package
+    name: Wikipedia Package
