@@ -145,7 +145,7 @@ a:hover {
     <header><img src="https://raw.githubusercontent.com/offspot/offspot-config/main/src/offspot_config/branding/horizontal-logo-light.png" style="width: 22rem; height: 4rem" /></header>
     <hr />
     <section>
-        <p class="alert alert-info">The following links replicates what Hotspot users would be faced with once they've connected to a running <strong><a href="https://kiwix.org/en/wifi-hotspot/">Kiwix Hotspot</a></strong> network running the macthing pre-packaged image.</p>
+        <p>The following links replicates what Hotspot users would be faced with once they've connected to a running <strong><a href="https://kiwix.org/en/wifi-hotspot/">Kiwix Hotspot</a></strong> network running the macthing pre-packaged image.</p>
     {% if demos %}
     {% for demo in demos.values() %}
     <div class="row">
@@ -156,7 +156,7 @@ a:hover {
     {% else %}
     <p>There's no demo configured at the moment 🤷‍♂️</p>
     {% endif %}
-    <p>Imager-service (“<em>Build your own</em>” option) allows you to create one such Hotspot with your own set of contents.</p>
+    <p>The Imager-service (“<em>Build your own</em>” option) allows you to create one such Hotspot with your own set of contents.</p>
         <p><a class="btn btn-primary">Kiwix Hotspot Shop <i class="bi bi-bag"></i></a></p>
     </section>
   </div>
