@@ -20,6 +20,7 @@ caddyfile_fpath = Path("/etc/caddy/Caddyfile")
 homepage_fpath = Path("/var/www/index.html")
 FQDN = os.getenv("FQDN", "") or "notset"
 
+
 def port_from(ident: str) -> int:
     return 1024 + sum([ord(char) for char in ident.strip().lower()])
 
