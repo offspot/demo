@@ -166,7 +166,6 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
         else:
             service["ports"] = [
                 f"{deployment.http_port}:80",
-                f"{deployment.https_port}:443",
             ]
 
         # dont allow using network_mode (captive portal with be switched to ports)
@@ -178,8 +177,7 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
             "ghcr.io/offspot/captive-portal:"
         ):
             service["ports"] = [
-                f"{deployment.http_port + 1}:80",
-                f"{deployment.https_port + 1}:443",
+                f"{deployment.captive_http_port}:80",
             ]
 
         # allow none to be privileged ; breaks hwclock but it's OK

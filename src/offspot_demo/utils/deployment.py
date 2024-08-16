@@ -17,13 +17,21 @@ from offspot_demo.constants import (
 )
 
 
+def port_from(ident: str) -> int:
+    return 1024 + sum([ord(char) for char in ident.strip().lower()])
+
+
+def captive_port_from(ident: str) -> int:
+    return 10000 + port_from(ident)
+
+
 @dataclass
 class Deployment:
     ident: str
     alias: str
     name: str
     http_port: int
-    https_port: int
+    captive_http_port: int
     enable_portal: bool = False
     _download_url: str = ""
     _subdomains: list[str] = field(default_factory=list)
@@ -36,12 +44,13 @@ class Deployment:
     def using(
         cls, ident: str, index: int, alias: str = "", name: str = ""
     ) -> "Deployment":
+        http_port = port_from(ident)
         return Deployment(
             ident=ident.strip(),
             alias=alias.strip() or ident.strip(),
             name=name.strip() or ident.strip(),
-            http_port=(index * 1000) + 3080,
-            https_port=(index * 1000) + 3443,
+            http_port=http_port,
+            captive_http_port=10000 + http_port,
             enable_portal=(index == 0),
         )
 

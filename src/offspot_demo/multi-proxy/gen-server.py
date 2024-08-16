@@ -20,6 +20,13 @@ caddyfile_fpath = Path("/etc/caddy/Caddyfile")
 homepage_fpath = Path("/var/www/index.html")
 FQDN = os.getenv("FQDN", "") or "notset"
 
+def port_from(ident: str) -> int:
+    return 1024 + sum([ord(char) for char in ident.strip().lower()])
+
+
+def captive_port_from(ident: str) -> int:
+    return 10000 + port_from(ident)
+
 
 @dataclasses.dataclass
 class Demo:
@@ -27,19 +34,22 @@ class Demo:
     dns_alias: str
     name: str
     port: int
+    captive_port: int
     subdomains: list[str]
 
     @classmethod
-    def from_line(cls, text: str, index: int):
+    def from_line(cls, text: str):
         """Demo from ident:[alias]:subdomains format"""
         ident, dns_alias, name, subdomains = text.strip().split(":", 3)
         if not dns_alias:
             dns_alias = ident
+
         return cls(
             ident=ident,
             dns_alias=dns_alias,
             name=name.strip(),
-            port=(index * 1000) + 3080,
+            port=port_from(ident),
+            captive_port=captive_port_from(ident),
             subdomains=[sd for sd in subdomains.strip().split("|") if sd],
         )
 
@@ -79,11 +89,24 @@ http://{{demo.dns_alias}}.{$FQDN}, https://{{demo.dns_alias}}.{$FQDN}, http://*.
     handle_errors 502 {
         respond "The “{{demo.ident}}” demo is not available or ready. \
 Please retry later.\n\n\
-HTTP {http.error.status_code}: {http.error.message}"
+HTTP {http.error.status_code}: {http.error.message}" 502
     }
 
     handle_errors {
-        respond "HTTP {http.error.status_code} for ”{{ident}}”: {http.error.message}"
+        respond "HTTP {http.error.status_code} for ”{{ident}}”: {http.error.message}" {http.error.status_code}
+    }
+}
+
+http://_captive.{{demo.dns_alias}}.{$FQDN}, https://_captive.{{demo.dns_alias}}.{$FQDN} {
+    reverse_proxy http://{$HOST_IP}:{{demo.captive_port}}
+    handle_errors 502 {
+        respond "The “{{demo.ident}}” captive demo is not available or ready. \
+Please retry later.\n\n\
+HTTP {http.error.status_code}: {http.error.message}" 502
+    }
+
+    handle_errors {
+        respond "HTTP {http.error.status_code} for ”{{ident}}” captive: {http.error.message}" {http.error.status_code}
     }
 }
 {% endfor %}
@@ -222,8 +245,8 @@ def entrypoint():
 
     demos: dict[str, Demo] = (
         {
-            Demo.from_line(svc, index).ident: Demo.from_line(svc, index)
-            for index, svc in enumerate(args.demos_string.split(","))
+            Demo.from_line(demo).ident: Demo.from_line(demo)
+            for demo in args.demos_string.split(",")
         }
         if args.demos_string
         else {}
