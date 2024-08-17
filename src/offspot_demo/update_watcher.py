@@ -54,6 +54,7 @@ def check_and_deploy():
             deploy_for(
                 deployment,
                 reuse_image=deployment.image_path.exists() and not has_new_image,
+                force_prepare=True,
             )
             == 0
         ):
