@@ -98,7 +98,7 @@ HTTP {http.error.status_code}: {http.error.message}" 502
     }
 }
 
-http://_captive.{{demo.dns_alias}}.{$FQDN}, https://_captive.{{demo.dns_alias}}.{$FQDN} {
+http://captive.{{demo.dns_alias}}.{$FQDN}, https://_captive.{{demo.dns_alias}}.{$FQDN} {
     tls {$TLS_EMAIL}
     redir http://{{demo.dns_alias}}.{$FQDN}:{{demo.captive_port}}
 }
