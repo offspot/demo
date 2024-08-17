@@ -177,7 +177,7 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
             "ghcr.io/offspot/captive-portal:"
         ):
             service["ports"] = [
-                f"{deployment.captive_http_port}:80",
+                f"{deployment.captive_http_port}:2080",
             ]
 
         # allow none to be privileged ; breaks hwclock but it's OK
