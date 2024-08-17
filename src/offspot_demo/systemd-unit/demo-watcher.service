@@ -1,5 +1,7 @@
 [Unit]
 Description=demo-watcher
+Requires=multi-proxy.service
+After=multi-proxy.service
 
 [Service]
 User=root
