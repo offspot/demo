@@ -205,7 +205,7 @@ def reconfigure_multiproxy():
     """request multi-proxy to regenerate+refresh its Caddy configuration and homepage
     based on current list of deployments"""
     demos_str = ",".join(
-        f"{depl.ident}:{depl.alias}:{'|'.join(depl.subdomains)}"
+        f"{depl.ident}:{depl.alias}:{depl.name}:{'|'.join(depl.subdomains)}"
         for depl in DEPLOYMENTS.values()
     )
     run_command(
