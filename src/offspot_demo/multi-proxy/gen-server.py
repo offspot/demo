@@ -99,17 +99,7 @@ HTTP {http.error.status_code}: {http.error.message}" 502
 }
 
 http://_captive.{{demo.dns_alias}}.{$FQDN}, https://_captive.{{demo.dns_alias}}.{$FQDN} {
-    reverse_proxy http://{$HOST_IP}:{{demo.captive_port}}
-    handle_errors 502 {
-        respond "The “{{demo.ident}}” captive demo is not available or ready. \
-Please retry later.\n\n\
-HTTP {http.error.status_code}: {http.error.message}" 502
-    }
-
-    handle_errors {
-        respond "HTTP {http.error.status_code} for ”{{ident}}” captive: {http.error.message}" {http.error.status_code}
-    }
-}
+    redir http://{{demo.dns_alias}}.{$FQDN}:{{demo.captive_port}}
 {% endfor %}
 
 http://*.{$FQDN}, https://*.{$FQDN} {
