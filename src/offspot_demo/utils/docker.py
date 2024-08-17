@@ -1,11 +1,14 @@
 import json
 
+from offspot_demo import logger
 from offspot_demo.utils.deployment import Deployment
 from offspot_demo.utils.process import run_command
 
 
 def start_demo(deployment: Deployment):
     stop_demo(deployment=deployment)
+    run_command(["docker", "compose", "-f", str(deployment.compose_path), "pull"])
+    run_command(["docker", "compose", "-f", str(deployment.compose_path), "build"])
     run_command(
         ["docker", "compose", "-f", str(deployment.compose_path), "up", "--build", "-d"]
     )
@@ -47,7 +50,11 @@ def is_demo_healthy(deployment: Deployment) -> bool:
     try:
         for line in ps.stdout.splitlines():
             payload = json.loads(line.strip())
-            if payload.get("State") in ("restarting", "removing", "dead", "exited"):
+            if payload.get("State") not in ("running",):
+                logger.error(
+                    f"{deployment} container {payload['Name']} "
+                    f"not running: {payload['State']}"
+                )
                 return False
     except Exception:
         return False
