@@ -71,6 +71,11 @@ http://{$FQDN}, https://{$FQDN} {
     tls {$TLS_EMAIL}
     log
 
+    respond /robots.txt <<EOT
+        User-agent: *
+        Disallow: /
+        EOT 200
+
     root * /var/www
     file_server
 
@@ -84,6 +89,11 @@ http://{$FQDN}, https://{$FQDN} {
 http://{{demo.dns_alias}}.{$FQDN}, https://{{demo.dns_alias}}.{$FQDN}, http://*.{{demo.dns_alias}}.{$FQDN}, https://*.{{demo.dns_alias}}.{$FQDN}{% if demo.subdomains %}{% for subdomain in demo.subdomains %}, http://{{ subdomain }}.{{demo.dns_alias}}.{$FQDN}, https://{{ subdomain }}.{{demo.dns_alias}}.{$FQDN}{% endfor %}{% endif %} {
     tls {$TLS_EMAIL}
     log
+
+    respond /robots.txt <<EOT
+        User-agent: *
+        Disallow: /
+        EOT 200
 
     reverse_proxy http://{$HOST_IP}:{{demo.port}}
 
