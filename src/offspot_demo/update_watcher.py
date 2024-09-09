@@ -31,7 +31,7 @@ def check_and_deploy():
         ident for ident in existing_idents if ident not in DEPLOYMENTS.keys()
     ]:
         logger.info(f"Undeploying previous deployment {ident}")
-        undeploy_for(Deployment.using(ident=ident, index=99), keep_image=False)
+        undeploy_for(Deployment.using(ident=ident), keep_image=False)
 
     if not DEPLOYMENTS:
         logger.info("No deployment in config")

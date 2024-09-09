@@ -32,7 +32,6 @@ class Deployment:
     name: str
     http_port: int
     captive_http_port: int
-    enable_portal: bool = False
     _download_url: str = ""
     _subdomains: list[str] = field(default_factory=list)
 
@@ -41,9 +40,7 @@ class Deployment:
             raise ValueError(f"Invalid Deployment data: {self.ident=}, {self.alias=}")
 
     @classmethod
-    def using(
-        cls, ident: str, index: int, alias: str = "", name: str = ""
-    ) -> "Deployment":
+    def using(cls, ident: str, alias: str = "", name: str = "") -> "Deployment":
         http_port = port_from(ident)
         return Deployment(
             ident=ident.strip(),
@@ -51,7 +48,6 @@ class Deployment:
             name=name.strip() or ident.strip(),
             http_port=http_port,
             captive_http_port=10000 + http_port,
-            enable_portal=(index == 0),
         )
 
     @property
@@ -188,17 +184,11 @@ class Deployment:
         return self.ident
 
 
-DEPLOYMENTS: dict[str, Deployment] = OrderedDict(
-    [
-        (
-            entry.split(":", 3)[0],
-            Deployment.using(
-                ident=entry.split(":", 3)[0],
-                index=index,
-                alias=(entry.split(":", 3)[1] or entry.split(":", 3)[0]),
-                name=(entry.split(":", 3)[2] or entry.split(":", 3)[0]),
-            ),
-        )
-        for index, entry in enumerate(OFFSPOT_DEMOS_LIST)
-    ]
-)
+DEPLOYMENTS: dict[str, Deployment] = {
+    entry.split(":", 3)[0]: Deployment.using(
+        ident=entry.split(":", 3)[0],
+        alias=(entry.split(":", 3)[1] or entry.split(":", 3)[0]),
+        name=(entry.split(":", 3)[2] or entry.split(":", 3)[0]),
+    )
+    for entry in OFFSPOT_DEMOS_LIST
+}
