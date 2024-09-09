@@ -37,7 +37,24 @@ To install the demo, you have to:
     - could be any other appropriate location, but then you have to modify `<src_path>/systemd-unit/demo-offspot.service`
   - customize this file as needed
   - automatically load the environment data in your user session: `echo "export \$(grep -v '^#' /etc/demo/environment | xargs) && env | grep OFFSPOT_DEMO" | tee /etc/profile.d/demo-env.sh`
-- setup the demo: run `demo-setup`
+- install the services and required aria2
+
+```sh
+# download and install aria2 (used for downloads)
+wget -O /tmp/aria2.zip https://github.com/abcfy2/aria2-static-build/releases/download/1.37.0/aria2-x86_64-linux-musl_libressl_static.zip \
+	&& unzip -d /tmp /tmp/aria2.zip \
+	&& mv /tmp/aria2c /usr/local/bin \
+	&& rm /tmp/aria2.zip \
+	&& aria2c -v
+
+# this folder must exists
+mkdir -p /var/log/demo
+
+# install systend units
+cp src/offspot_demo/systemd-unit/* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now multi-proxy.service demo-watcher.service demo-watcher.timer
+```
 
 ## How it works
 
