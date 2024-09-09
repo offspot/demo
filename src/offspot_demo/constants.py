@@ -1,56 +1,59 @@
 import enum
-import logging
 import os
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from offspot_demo.__about__ import NAME
-
-OFFSPOT_IMAGE_ID = "offspot-demo"
-OFFSPOT_IMAGE_URL = os.getenv(
-    "OFFSPOT_DEMO_IMAGE_URL",
-    f"https://api.imager.kiwix.org/auto-images/{OFFSPOT_IMAGE_ID}/json",
+# general, machine-specific
+OFFSPOT_CONFIGURATION = Path(
+    os.getenv("OFFSPOT_CONFIGURATION") or "/etc/demo/environment"
 )
-TARGET_DIR = Path(os.getenv("OFFSPOT_DEMO_TARGET_DIR", "/data"))
-IMAGE_PATH = Path(os.getenv("OFFSPOT_DEMO_IMAGE_PATH", "/demo/image.img"))
-LAST_IMAGE_DEPLOYED_PATH = Path("/demo/last_image")
-
-FQDN = os.getenv("OFFSPOT_DEMO_FQDN", "demo.hostpot.kiwix.org")
+OFFSPOT_DEMO_MAIN_FQDN = os.getenv("OFFSPOT_DEMO_FQDN", "")
+OFFSPOT_DEMOS_LIST = [
+    entry
+    for entry in (os.getenv("OFFSPOT_DEMOS_LIST") or "").split(",")
+    if entry.strip()
+]
+OFFSPOT_DEMO_IMAGES_ROOT_DIR = Path(
+    os.getenv("OFFSPOT_DEMO_IMAGES_ROOT_DIR") or "/data/demo/images"
+)
+OFFSPOT_DEMO_TARGET_ROOT_DIR = Path(
+    os.getenv("OFFSPOT_DEMO_TARGET_ROOT_DIR") or "/data/demo/data"
+)
+OFFSPOT_DEMO_COMPOSE_ROOT_DIR = Path(
+    os.getenv("OFFSPOT_DEMO_COMPOSE_ROOT_DIR") or "/data/demo/compose"
+)
 OFFSPOT_DEMO_TLS_EMAIL = os.getenv("OFFSPOT_DEMO_TLS_EMAIL", "dev@kiwix.org")
 
-SRC_PATH = Path(__file__).parent
+IMAGER_SERVICE_API_USERNAME = os.getenv("IMAGER_SERVICE_API_USERNAME") or ""
+IMAGER_SERVICE_API_PASSWORD = os.getenv("IMAGER_SERVICE_API_PASSWORD") or ""
 
-DOCKER_COMPOSE_IMAGE_PATH = TARGET_DIR / "compose.yaml"
-DOCKER_COMPOSE_MAINT_PATH = SRC_PATH / "maint-compose" / "docker-compose.yml"
-DOCKER_COMPOSE_SYMLINK_PATH = Path("/etc/docker/compose.yaml")
+# Default timeout of HTTP requests made by the scripts
+DEFAULT_HTTP_TIMEOUT_SECONDS = 30
+# maintenance container and images must be labeled with this
+# in order not to be purged by deploy
+DOCKER_LABEL_MAINT = "maintenance"
+OCI_PLATFORM = os.getenv("OFFSPOT_DEMO_OCI_PLATFORM", "linux/amd64")
+# Expected duration for the service startup ; scripts use this to pause and check that
+# service is still up after this duration
+STARTUP_DURATION = int(os.getenv("STARTUP_DURATION") or "10")
+SRC_PATH = Path(__file__).parent
 
 SYSTEMD_UNITS_PATH = Path("/etc/systemd/system/")
 SYSTEMD_OFFSPOT_UNIT_NAME = "demo-offspot"
 SYSTEMD_WATCHER_UNIT_NAME = "demo-watcher"
 
+MULTI_CONFIG_URL = (
+    os.getenv("MULTI_CONFIG_URL")
+    or "https://raw.githubusercontent.com/offspot/demo/main/demos.yaml"
+)
+
 JINJA_ENV = Environment(
     loader=FileSystemLoader(Path(__file__).parent), autoescape=select_autoescape()
 )
-
-# Expected duration for the service startup ; scripts use this to pause and check that
-# service is still up after this duration
-STARTUP_DURATION = 10
-
-# maintenance container and images must be labeled with this
-# in order not to be purged by deploy
-DOCKER_LABEL_MAINT = "maintenance"
-
-OCI_PLATFORM = os.getenv("OFFSPOT_DEMO_OCI_PLATFORM", "linux/amd64")
+DEBUG: bool = bool(os.getenv("DEBUG") or "")
 
 
 class Mode(enum.Enum):
     IMAGE = 1
     MAINT = 2
-
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(NAME)
-
-# Default timeout of HTTP requests made by the scripts
-DEFAULT_HTTP_TIMEOUT_SECONDS = 30

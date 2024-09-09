@@ -1,4 +1,11 @@
-{$OFFSPOT_DEMO_FQDN} {
-    tls {$OFFSPOT_DEMO_TLS_EMAIL}
-    respond "This website is under maintenance, please come back in a moment." 503
+{
+    auto_https off
+}
+
+http:// {
+    @fqdn host {$FQDN}
+    handle @fqdn {
+        respond "{$FQDN} website is under maintenance, please come back in a moment." 503
+    }
+    respond "This website is under maintenance (fallback), please come back in a moment." 503
 }

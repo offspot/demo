@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """ Deploy an image from an image URL
 
 Limitations:
@@ -9,6 +11,7 @@ import argparse
 import hashlib
 import http
 import logging
+import shutil
 import sys
 from contextlib import ExitStack
 from pathlib import Path
@@ -17,17 +20,16 @@ from typing import NamedTuple
 
 import requests
 
+from offspot_demo import logger
 from offspot_demo.constants import (
     DEFAULT_HTTP_TIMEOUT_SECONDS,
     DOCKER_LABEL_MAINT,
-    IMAGE_PATH,
-    TARGET_DIR,
     Mode,
-    logger,
 )
-from offspot_demo.prepare import prepare_image
+from offspot_demo.prepare import prepare_for
 from offspot_demo.toggle import toggle_demo
 from offspot_demo.utils import fail, is_root
+from offspot_demo.utils.deployment import DEPLOYMENTS, Deployment
 from offspot_demo.utils.image import (
     attach_to_device,
     detach_device,
@@ -161,7 +163,7 @@ def download_file_into(url: str, dest: Path, digest: S3CompatibleETag) -> int:
 
     # download into a temp folder next to target
     with TemporaryDirectory(
-        suffix=".aria2", dir=dest.parent, ignore_cleanup_errors=True, delete=True
+        suffix=".aria2", dir=dest.parent, ignore_cleanup_errors=True
     ) as tmpdir:
         tmp_dest = Path(tmpdir).joinpath("image.img")
 
@@ -171,15 +173,12 @@ def download_file_into(url: str, dest: Path, digest: S3CompatibleETag) -> int:
             str(tmp_dest.parent),
             "--out",
             "image.img",
-            "--enable-rpc",
-            "--on-download-complete=stop_aria2c_processes",
-            "--on-download-error=stop_aria2c_processes",
         ]
         # single part checksum, let aria2 handle checksum validation
         if digest.is_singlepart:
             args += ["--checksum", digest.checksum]
         args += [url]
-        aria2 = run_command(args)
+        aria2 = run_command(args, quiet=False)
 
         if aria2.returncode != 0:
             logger.error("Failed to download with aria2c: {aria2.returncode}")
@@ -194,6 +193,7 @@ def download_file_into(url: str, dest: Path, digest: S3CompatibleETag) -> int:
                     f"MD5 checksum validation failed: {computed=} != {digest.etag}"
                 )
                 return 32
+
         # move to destination (should be safe as we're in sub of parent)
         tmp_dest.rename(dest)
 
@@ -201,7 +201,23 @@ def download_file_into(url: str, dest: Path, digest: S3CompatibleETag) -> int:
     return 0
 
 
-def deploy_url(url: str, *, reuse_image: bool):
+def reconfigure_multiproxy():
+    """request multi-proxy to regenerate+refresh its Caddy configuration and homepage
+    based on current list of deployments"""
+    demos_str = ",".join(
+        f"{depl.ident}:{depl.alias}:{depl.name}:{'|'.join(depl.subdomains)}"
+        for depl in DEPLOYMENTS.values()
+    )
+    run_command(
+        ["docker", "exec", "multi-proxy", "gen-server", "--demos", demos_str],
+        failsafe=True,
+    )
+    run_command(["docker", "exec", "multi-proxy", "caddy-reload"], failsafe=True)
+
+
+def deploy_for(
+    deployment: Deployment, *, reuse_image: bool, force_prepare: bool = False
+):
     """Deploy from an URL
 
     Parameters:
@@ -210,11 +226,11 @@ def deploy_url(url: str, *, reuse_image: bool):
     """
 
     rc = -1
-    # add a post-exectution callback to do_deploy_url so our cleanup func is run
+    # add a post-exectution callback to do_deploy so our cleanup func is run
     # should the function raise an exception or an error
     with ExitStack() as stack:
-        stack.callback(on_error_cleanup)
-        rc = do_deploy_url(url, reuse_image=reuse_image)
+        stack.callback(on_error_cleanup, deployment=deployment)
+        rc = do_deploy(deployment, reuse_image=reuse_image, force_prepare=force_prepare)
         # if the rc is 0 (success), we remove the callback from the stack
         # so it's not run
         if not rc:
@@ -222,50 +238,68 @@ def deploy_url(url: str, *, reuse_image: bool):
     return rc
 
 
-def on_error_cleanup():
+def on_error_cleanup(deployment: Deployment):
     """cleanup and resource release to apply post-error"""
     logger.debug("Post-error cleanup")
     for func in (set_maint_mode, unmount_detach_release):
-        rc = func()
+        rc = func(deployment=deployment)
         if rc:
             fail(f"> Error cleaning up {func}")
 
 
-def do_deploy_url(url: str, *, reuse_image: bool):
+def do_deploy(deployment: Deployment, *, reuse_image: bool, force_prepare: bool):
     """actual deployment ; no failsafe. Prefer deploy_url()"""
-    logger.info(f"deploying for {url}")
+    logger.info(f"deploying for {deployment.download_url}")
 
     if not is_root():
         return fail("must be root", 1)
 
-    if not is_url_correct(url):
-        return fail(f"URL is incorrect: {url}")
+    if not is_url_correct(deployment.download_url):
+        return fail(f"URL is incorrect: {deployment.download_url}")
     logger.info("> URL is OK")
 
-    rc = toggle_demo(mode=Mode.MAINT)
+    logger.info(f"Download image file using aria2 ({reuse_image=})")
+    if (
+        not reuse_image or not deployment.image_path.exists()
+    ) and not deployment.tmp_image_path.exists():
+        rc = download_file_into(
+            url=deployment.download_url,
+            dest=deployment.tmp_image_path,
+            digest=get_checksum_from(deployment.download_url),
+        )
+        if rc:
+            return fail("Failed to download image", rc)
+
+    rc = toggle_demo(deployment, mode=Mode.MAINT)
     if rc:
         return fail("Failed to switch to maintenance mode")
 
-    rc = unmount_detach_release()
+    rc = unmount_detach_release(deployment)
     if rc:
         return fail("Unable to release image", rc)
 
-    if IMAGE_PATH.exists() and not reuse_image:
-        logger.info(f"> removing {IMAGE_PATH}")
+    if deployment.image_path.exists() and not reuse_image:
+        logger.info(f"> removing {deployment.image_path}")
         try:
-            IMAGE_PATH.unlink(missing_ok=True)  # should not be missing
+            deployment.image_path.unlink(missing_ok=True)  # should not be missing
         except Exception as exc:
             logger.exception(exc)
-            return fail(f"Failed to remove {IMAGE_PATH}: {exc}")
+            return fail(f"Failed to remove {deployment.image_path}: {exc}")
+
+    if not reuse_image:
+        logger.info("Replacing image with downloaded one")
+        try:
+            deployment.image_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(deployment.tmp_image_path, deployment.image_path)
+        except Exception as exc:
+            logger.exception(exc)
+            return fail(
+                f"Failed to rename {deployment.tmp_image_path} "
+                f"to {deployment.image_path}: {exc}"
+            )
 
     logger.info("> purging docker")
     prune_docker()
-
-    logger.info("Download image file using aria2")
-    if not reuse_image:
-        rc = download_file_into(url=url, dest=IMAGE_PATH, digest=get_checksum_from(url))
-        if rc:
-            return fail("Failed to download image", rc)
 
     logger.info("Requesting loop device")
     try:
@@ -277,40 +311,43 @@ def do_deploy_url(url: str, *, reuse_image: bool):
 
     logger.info(f"Attaching image to {loop_dev}")
     try:
-        attach_to_device(img_fpath=IMAGE_PATH, loop_dev=loop_dev)
+        attach_to_device(img_fpath=deployment.image_path, loop_dev=loop_dev)
     except Exception as exc:
         logger.debug(exc)
         return fail(f"Failed to attach image to {loop_dev}: {exc}")
 
-    TARGET_DIR.mkdir(parents=True, exist_ok=True)
+    deployment.target_dir.mkdir(parents=True, exist_ok=True)
 
-    logger.info(f"Mounting 3rd partition to {TARGET_DIR}")
+    logger.info(f"Mounting 3rd partition to {deployment.target_dir}")
     if not mount_on(
-        dev_path=f"{loop_dev}p3", mount_point=TARGET_DIR, filesystem="ext4"
+        dev_path=f"{loop_dev}p3", mount_point=deployment.target_dir, filesystem="ext4"
     ):
         return fail(f"Failed to mount {loop_dev}p3 to TARGET_DIR")
 
-    rc = prepare_image(target_dir=TARGET_DIR)
+    rc = prepare_for(deployment, force=force_prepare)
     if rc:
         return fail("Failed to prepare image", rc)
 
     logger.info("Switching to image mode")
-    rc = toggle_demo(mode=Mode.IMAGE)
+    rc = toggle_demo(deployment, mode=Mode.IMAGE)
     if rc:
         return fail("Failed to switch to image mode", rc)
+
+    logger.info("Reconfiguring multi-proxy")
+    reconfigure_multiproxy()
 
     logger.info("> demo ready")
     return 0
 
 
-def unmount_detach_release() -> int:
+def unmount_detach_release(deployment: Deployment) -> int:
     """unmount image and release loop-device"""
-    if is_mounted(TARGET_DIR):
-        logger.info(f"> unmounting {TARGET_DIR}")
-        if not unmount(TARGET_DIR):
-            return fail(f"Failed to unmout {TARGET_DIR}")
+    if is_mounted(deployment.target_dir):
+        logger.info(f"> unmounting {deployment.target_dir}")
+        if not unmount(deployment.target_dir):
+            return fail(f"Failed to unmout {deployment.target_dir}")
 
-    loop_dev = get_loopdev_used_by(IMAGE_PATH)
+    loop_dev = get_loopdev_used_by(deployment.image_path)
     if loop_dev:
         logger.info(f"> detaching {loop_dev}")
         if not detach_device(loop_dev=loop_dev, failsafe=True):
@@ -318,19 +355,14 @@ def unmount_detach_release() -> int:
     return 0
 
 
-def set_maint_mode() -> int:
+def set_maint_mode(deployment: Deployment) -> int:
     """change mode to maintenance mode (used as cleanup)"""
-    return toggle_demo(Mode.MAINT)
+    return toggle_demo(deployment, Mode.MAINT)
 
 
 def entrypoint():
     parser = argparse.ArgumentParser(
-        prog="demo-deploy",
-        description="Deploy an offspot demo from an Image URL",
-        epilog="URL comes from either auto-image JSON "  # noqa: ISC003
-        + "or Imager Service email. "
-        + "https://org-kiwix-hotspot-cardshop-download.s3.us-west-1.wasabisys.com/"
-        + "xxxxx.img",
+        prog="demo-deploy", description="Deploy an offspot demo from a deployment ident"
     )
 
     parser.add_argument(
@@ -342,15 +374,26 @@ def entrypoint():
     )
 
     parser.add_argument(
-        dest="url",
-        help="Imager Service-created Image URL",
+        "--force-prepare",
+        action="store_true",
+        dest="force_prepare",
+        default=False,
+        help="[dev] force re-preparing already prepared image",
     )
+
+    parser.add_argument(dest="ident", help="Deployment/image identifier")
 
     args = parser.parse_args()
     logger.setLevel(logging.DEBUG)
 
     try:
-        sys.exit(deploy_url(url=args.url, reuse_image=args.reuse_image))
+        sys.exit(
+            deploy_for(
+                deployment=DEPLOYMENTS[args.ident],
+                reuse_image=args.reuse_image,
+                force_prepare=args.force_prepare,
+            )
+        )
     except Exception as exc:
         logger.exception(exc)
         logger.critical(str(exc))

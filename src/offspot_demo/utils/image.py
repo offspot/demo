@@ -4,7 +4,7 @@ import os
 import pathlib
 import subprocess
 
-from offspot_demo.constants import logger
+from offspot_demo import logger
 from offspot_demo.utils import get_environ
 
 

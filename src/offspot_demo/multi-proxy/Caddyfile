@@ -1,0 +1,4 @@
+{$FQDN}, *.{$FQDN} {
+    tls {$TLS_EMAIL}
+    respond "This website is under maintenance, please come back in a moment." 503
+}

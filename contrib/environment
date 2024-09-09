@@ -1,17 +1,42 @@
 # FQDN which will be used by the demo, e.g. demo.hotspot.kiwix.org
 OFFSPOT_DEMO_FQDN="demo.hotspot.kiwix.org"
+# address to use in multi-proxy to reach the individual hotspot-proxies (on their assign ports)
+OFFSPOT_DEMO_HOST_IP="62.210.206.65"
 
-# URL of the Image to watch / deploy (either autoimage URL or email URL)
-OFFSPOT_DEMO_IMAGE_URL="https://api.imager.kiwix.org/auto-images/offspot-demo/json"
+# comma-separated demo info
+# format is {ident}:[{alias}]:[{name}]:[{subdomains}]
+# alias and names can be empty (uses ident then)
+# subdomains are usually left empty so ends with an hanging semicolon
+# that's because prepare script will update it
+OFFSPOT_DEMOS_LIST="demo:free:Free Package:"
 
-# Folder where everything will be deployed
-OFFSPOT_DEMO_TARGET_DIR="/data"
+# imager-service API credentials to retrieve URLs
+IMAGER_SERVICE_API_USERNAME="notset"
+IMAGER_SERVICE_API_PASSWORD="notset"
 
-# Location of the image
-OFFSPOT_DEMO_IMAGE_PATH="/demo/image.img"
+# Email adress for acme to receive notifications about expiring/expired certificates
+OFFSPOT_DEMO_TLS_EMAIL="dev@kiwix.org"
+
+# nb of seconds to wait when starting a compose to check its still running
+STARTUP_DURATION="60"
+
+# location of the demos.yaml file to read main config from
+MULTI_CONFIG_URL="https://raw.githubusercontent.com/kiwix/operations/main/demos/demo.offspot.yaml"
+
+# Configuration file (this very one file)
+OFFSPOT_CONFIGURATION="/etc/demo/environment"
+
+# Root folder where everything will be deployed (in per-demo subfolder)
+OFFSPOT_DEMO_TARGET_ROOT_DIR="/data/demo/data"
+
+# Location of the images on disk
+OFFSPOT_DEMO_IMAGES_ROOT_DIR="/data/demo/images"
+OFFSPOT_DEMO_COMPOSE_ROOT_DIR="/data/demo/compose"
 
 # OCI plateform to use (by default, offspot is linux/aarch64 but usually demo will run on linux/amd64)
 OFFSPOT_DEMO_OCI_PLATFORM="linux/amd64"
 
-# Email adress for acme to receive notifications about expiring/expired certificates
-OFFSPOT_DEMO_TLS_EMAIL="dev@kiwix.org"
+OFFSPOT_DEMO_SRC_DIR="/data/demo/repo/src/offspot_demo"
+OFFSPOT_ENV_DIR="/data/demo/env"
+OFFSPOT_DEMO_PROXY_CONTAINER_NAME="multi-proxy"
+OFFSPOT_DEMO_PROXY_IMAGE_NAME="multi-proxy"
