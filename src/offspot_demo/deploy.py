@@ -226,11 +226,11 @@ def deploy_for(
     """
 
     rc = -1
-    # add a post-exectution callback to do_deploy_url so our cleanup func is run
+    # add a post-exectution callback to do_deploy so our cleanup func is run
     # should the function raise an exception or an error
     with ExitStack() as stack:
         stack.callback(on_error_cleanup, deployment=deployment)
-        rc = do_deploy_url(
+        rc = do_deploy(
             deployment, reuse_image=reuse_image, force_prepare=force_prepare
         )
         # if the rc is 0 (success), we remove the callback from the stack
@@ -249,7 +249,7 @@ def on_error_cleanup(deployment: Deployment):
             fail(f"> Error cleaning up {func}")
 
 
-def do_deploy_url(deployment: Deployment, *, reuse_image: bool, force_prepare: bool):
+def do_deploy(deployment: Deployment, *, reuse_image: bool, force_prepare: bool):
     """actual deployment ; no failsafe. Prefer deploy_url()"""
     logger.info(f"deploying for {deployment.download_url}")
 
