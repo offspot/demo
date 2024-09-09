@@ -230,9 +230,7 @@ def deploy_for(
     # should the function raise an exception or an error
     with ExitStack() as stack:
         stack.callback(on_error_cleanup, deployment=deployment)
-        rc = do_deploy(
-            deployment, reuse_image=reuse_image, force_prepare=force_prepare
-        )
+        rc = do_deploy(deployment, reuse_image=reuse_image, force_prepare=force_prepare)
         # if the rc is 0 (success), we remove the callback from the stack
         # so it's not run
         if not rc:
