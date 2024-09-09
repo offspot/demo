@@ -21,7 +21,7 @@ OFFSPOT_DEMO_TLS_EMAIL="dev@kiwix.org"
 STARTUP_DURATION="60"
 
 # location of the demos.yaml file to read main config from
-MULTI_CONFIG_URL="https://raw.githubusercontent.com/offspot/demo/multi-demo/demos.yaml"
+MULTI_CONFIG_URL="https://raw.githubusercontent.com/kiwix/operations/main/demos/demo.offspot.yaml"
 
 # Configuration file (this very one file)
 OFFSPOT_CONFIGURATION="/etc/demo/environment"

@@ -43,7 +43,7 @@ To install the demo, you have to:
 
 - always-running caddy web server named `multi-proxy` that responds to the FQDN and links to individual demos
 - one script runs *always* (restarted every 15mn) running two scripts one after the other
-  - config-watcher that checks `demos.yaml` file in this repo and updates `/etc/demo/environment` accordingly
+  - config-watcher that checks [`demos.yaml`](https://github.com/kiwix/operations/blob/main/demos/demo.offspot.yaml) file in kiwix/operations repo and updates `/etc/demo/environment` accordingly
   - update-watcher removes deployments (not in config anymore), deploys new or updated ones (images are updated periodically so it checks online if a new version is available)
 - deploy script (ran for an indiv demo) downloads the image file then:
   - turn that demo off (switch to maintenance mode)
