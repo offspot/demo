@@ -10,6 +10,15 @@ Kiwix Hotspot Demo adheres to openZIM's [Contribution Guidelines](https://github
 
 Kiwix Hotspot Demo has implemented openZIM's [Python bootstrap, conventions and policies](https://github.com/openzim/_python-bootstrap/docs/Policy.md) **v1.0.0**.
 
+## Managing live demo
+
+Adding, removing or reordering demos is done by editing (via a PR) [`demo.offspot.yaml`](https://github.com/kiwix/operations/blob/main/demos/demo.offspot.yaml) file on [`kiwix/operations`](https://github.com/kiwix/operations) repository.
+
+- The `ident` key must match the imager-service ident of the auto-image.
+- The `name` key is an optionnal user-friendly label for the homepage.
+- The `alias` key is an optionnal user-friendly replacement of `ident` for the demo's sub-domain (`xxx.demo.hotspot.kiwix.org`)
+- The icon can be added/updated via a PR on this repository (files are named after `ident` in `/src/offspot_demo/multi-proxy/assets`)
+
 ## Pre-requisites
 
 Installing this demo requires:
@@ -60,7 +69,7 @@ sudo systemctl enable --now multi-proxy.service demo-watcher.service demo-watche
 
 - always-running caddy web server named `multi-proxy` that responds to the FQDN and links to individual demos
 - one script runs *always* (restarted every 15mn) running two scripts one after the other
-  - config-watcher that checks [`demos.yaml`](https://github.com/kiwix/operations/blob/main/demos/demo.offspot.yaml) file in kiwix/operations repo and updates `/etc/demo/environment` accordingly
+  - config-watcher that checks [`demo.offspot.yaml`](https://github.com/kiwix/operations/blob/main/demos/demo.offspot.yaml) file in kiwix/operations repo and updates `/etc/demo/environment` accordingly
   - update-watcher removes deployments (not in config anymore), deploys new or updated ones (images are updated periodically so it checks online if a new version is available)
 - deploy script (ran for an indiv demo) downloads the image file then:
   - turn that demo off (switch to maintenance mode)
