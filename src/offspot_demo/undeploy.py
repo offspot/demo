@@ -11,6 +11,9 @@ import argparse
 import logging
 import shutil
 import sys
+from http import HTTPStatus
+
+import requests.exceptions
 
 from offspot_demo import logger
 from offspot_demo.deploy import unmount_detach_release
@@ -20,6 +23,14 @@ from offspot_demo.utils.docker import stop_demo
 
 
 def undeploy_for(deployment: Deployment, *, keep_image: bool):
+    try:
+        deployment.download_url  # noqa: B018
+    except requests.exceptions.HTTPError as exc:
+        if exc.response.status_code == HTTPStatus.NOT_FOUND:
+            deployment._download_url = f"Gone image ({deployment.ident})"  # pyright: ignore [reportPrivateUsage]
+
+        else:
+            raise exc
     logger.info(f"undeploying for {deployment.download_url}")
 
     if not is_root():
