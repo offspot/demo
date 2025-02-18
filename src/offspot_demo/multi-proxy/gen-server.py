@@ -168,7 +168,7 @@ a:hover {
 </head>
 <body>
   <div class="container">
-    <header><img src="https://raw.githubusercontent.com/offspot/offspot-config/main/src/offspot_config/branding/horizontal-logo-light.png" style="width: 22rem; height: 4rem" /></header>
+    <header><img src="https://raw.githubusercontent.com/offspot/offspot-config/main/src/offspot_config/branding/horizontal-logo-light.png" style="height: 4rem" /></header>
     <hr />
     <section>
         <p>The following links replicates what Hotspot users would be faced with once they've connected to a running <strong><a href="https://kiwix.org/en/wifi-hotspot/">Kiwix Hotspot</a></strong> network running the macthing pre-packaged image.</p>
