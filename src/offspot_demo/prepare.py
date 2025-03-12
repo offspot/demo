@@ -193,7 +193,11 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
             service["environment"]["DEMO_TLS_EMAIL"] = OFFSPOT_DEMO_TLS_EMAIL
             service["environment"]["IS_ONLINE_DEMO"] = "false"
             service["environment"]["FQDN"] = deployment.fqdn
-            subdomains += service["environment"]["SERVICES"].split(",")
+            # services can be mapping
+            subdomains += [
+                fm.split(":")[0]
+                for fm in service["environment"]["SERVICES"].split(",")
+            ]
             subdomains += [
                 fm.split(":")[0]
                 for fm in service["environment"].get("FILES_MAPPING", "").split(",")
