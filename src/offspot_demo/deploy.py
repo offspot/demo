@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-""" Deploy an image from an image URL
+"""Deploy an image from an image URL
 
 Limitations:
 - URL must be hosted on S3 (or at least webserver must serve an md5 digest in ETag)

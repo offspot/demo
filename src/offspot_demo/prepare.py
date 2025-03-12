@@ -195,8 +195,7 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
             service["environment"]["FQDN"] = deployment.fqdn
             # services can be mapping
             subdomains += [
-                fm.split(":")[0]
-                for fm in service["environment"]["SERVICES"].split(",")
+                fm.split(":")[0] for fm in service["environment"]["SERVICES"].split(",")
             ]
             subdomains += [
                 fm.split(":")[0]

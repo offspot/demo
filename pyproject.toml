@@ -9,7 +9,7 @@ description = "Kiwix Hotspot Demo"
 readme = "README.md"
 dependencies = [
     "requests==2.32.3",
-    "Jinja2==3.1.4",
+    "Jinja2==3.1.6",
     "pyyaml==6.0.2"
 ]
 dynamic = ["authors", "classifiers", "keywords", "license", "version", "urls"]
@@ -22,19 +22,19 @@ scripts = [
   "invoke==2.2.0",
 ]
 lint = [
-  "black==24.8.0",
-  "ruff==0.6.4",
+  "black==25.1.0",
+  "ruff==0.9.10",
 ]
 check = [
-  "pyright==1.1.379",
+  "pyright==1.1.396",
 ]
 test = [
-  "pytest==8.3.2",
-  "coverage==7.6.1",
+  "pytest==8.3.5",
+  "coverage==7.6.12",
 ]
 dev = [
-  "ipython==8.27.0",
-  "pre-commit==3.8.2",
+  "ipython==9.0.2",
+  "pre-commit==4.1.0",
   "offspot-demo[scripts]",
   "offspot-demo[lint]",
   "offspot-demo[test]",

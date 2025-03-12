@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-""" Generates multi-proxy configuration fron SERVICES environ.
-    Generates static homepage
+"""Generates multi-proxy configuration fron SERVICES environ.
+Generates static homepage
 
-    Dependencies:
-    - Jinja2
+Dependencies:
+- Jinja2
 """
 import argparse
 import dataclasses
