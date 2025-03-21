@@ -152,6 +152,18 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
 
             # other volumes are not accepted and thus removed (not added-back)
 
+        # disabled healthcheck for home (its defined in image)
+        if svcname == "home":
+            service["healthcheck"] = {"disable": True}
+
+        # remove metrics dependency to home being healthy as we disabled healthcheck
+        if (
+            svcname == "metrics"
+            and service.get("depends_on", {}).get("home", {}).get("condition", "")
+            == "service_healthy"
+        ):
+            service["depends_on"]["home"]["condition"] = "service_started"
+
         # remove cap_add for all ; will break captive portal but it's OK
         if "cap_add" in service:
             del service["cap_add"]
