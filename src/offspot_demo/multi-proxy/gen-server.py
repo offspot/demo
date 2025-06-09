@@ -54,6 +54,13 @@ class Demo:
             subdomains=[sd for sd in subdomains.strip().split("|") if sd],
         )
 
+    @property
+    def icon_url(self) -> str:
+        ident = {"computers": "computer", "wikipedia-en": "wikipedia"}.get(
+            self.ident, self.ident
+        )
+        return f"https://imager.kiwix.org/static/img/stripe/HW/{ident}-512.png"
+
 
 caddy_template: Template = Template(
     """
@@ -175,7 +182,7 @@ a:hover {
     {% if demos %}
     {% for demo in demos.values() %}
     <div class="row">
-            <div class="col-2 col-md-1"><a href="//{{demo.dns_alias}}.{{FQDN}}"><img class="icon" onerror="this.style.display='none'" src="assets/{{demo.ident}}.png" /></a></div>
+            <div class="col-2 col-md-1"><a href="//{{demo.dns_alias}}.{{FQDN}}"><img class="icon" onerror="this.style.display='none'" src="{{ demo.icon_url}}" /></a></div>
             <div class="col"><a href="//{{demo.dns_alias}}.{{FQDN}}">{{demo.name}}</a></div>
         </div>
     {% endfor %}
