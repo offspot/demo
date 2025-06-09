@@ -11,7 +11,6 @@ RUN \
 COPY Caddyfile /etc/caddy/
 COPY gen-server.py /src/
 COPY entrypoint.sh /usr/local/bin/entrypoint
-COPY assets /var/www/assets
 
 # FQDN to reverse for (main domain)
 ENV FQDN "demo.hotspot.kiwix.org"
