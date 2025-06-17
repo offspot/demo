@@ -203,7 +203,7 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
 
         if svcname == "reverse-proxy":
             service["environment"]["DEMO_TLS_EMAIL"] = OFFSPOT_DEMO_TLS_EMAIL
-            service["environment"]["IS_ONLINE_DEMO"] = "false"
+            service["environment"]["IS_ONLINE_DEMO"] = "true"
             service["environment"]["FQDN"] = deployment.fqdn
             # services can be mapping
             subdomains += [
