@@ -105,7 +105,6 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
     subdomains: list[str] = []
 
     for svcname, service in compose.get("services", {}).items():
-
         # delete container_name so we can have multiple compose in parallel
         if "container_name" in service.keys():
             del service["container_name"]
@@ -113,7 +112,6 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
         orig_volumes = list(service.get("volumes", []))
         service["volumes"] = []
         for volume in orig_volumes:
-
             # we accept /data prefixed sources
             if Path(volume["source"]).is_relative_to(offspot_data_root):
                 # rewrite so it works off any `target_dir`
@@ -155,6 +153,43 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
         # disabled healthcheck for home (its defined in image)
         if svcname == "home":
             service["healthcheck"] = {"disable": True}
+
+        # fix volumes for adminui
+        if svcname == "adminui":
+            # add real compose file (used to )
+            service["volumes"].append(
+                {
+                    "type": "bind",
+                    "source": str(deployment.image_compose_path),
+                    "target": "/etc/docker/compose.yml",
+                    "read_only": True,
+                }
+            )
+            # add empty files for expected offspot config, latest config
+            # and hostapd config
+            fakedir = deployment.target_dir.joinpath("fake")
+            fakedir.mkdir(exist_ok=True)
+            for fake_path in (
+                Path("/boot/firmware/offspot.yaml"),
+                Path("/etc/offspot/latest.yaml"),
+                Path("/etc/hostapd/hostapd.conf"),
+            ):
+                fake_on_disk = fakedir / fake_path.name
+                fake_on_disk.touch(exist_ok=True)
+                service["volumes"].append(
+                    {
+                        "type": "bind",
+                        "read_only": False,  # because of /boot one only
+                        "source": str(fake_on_disk),
+                        "target": str(fake_path),
+                    }
+                )
+
+        # skip version 1.3.1 of adminui image
+        if svcname == "adminui" and service["image"].endswith(
+            ":1.3.1"
+        ):
+            service["image"] = service["image"].replace(":1.3.1", ":1.3.2")
 
         # remove metrics dependency to home being healthy as we disabled healthcheck
         if (
