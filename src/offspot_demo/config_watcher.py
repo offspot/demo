@@ -71,8 +71,8 @@ def check_and_record():
     resp.raise_for_status()
     payload = yaml_load(resp.text)
     demos_conf = ",".join(
-        f'{demo["ident"]}:{demo.get("alias", demo["ident"])}:'
-        f'{demo.get("name", demo["ident"])}:'
+        f"{demo['ident']}:{demo.get('alias', demo['ident'])}:"
+        f"{demo.get('name', demo['ident'])}:"
         for demo in payload["demos"]
     )
 

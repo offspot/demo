@@ -186,9 +186,7 @@ def prepare_for(deployment: Deployment, *, force: bool) -> int:
                 )
 
         # skip version 1.3.1 of adminui image
-        if svcname == "adminui" and service["image"].endswith(
-            ":1.3.1"
-        ):
+        if svcname == "adminui" and service["image"].endswith(":1.3.1"):
             service["image"] = service["image"].replace(":1.3.1", ":1.3.2")
 
         # remove metrics dependency to home being healthy as we disabled healthcheck
