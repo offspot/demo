@@ -90,11 +90,13 @@ class Deployment:
         )
         resp.raise_for_status()
         payload = resp.json()
-        if not payload.get("http_url"):
-            logger.warning(f"'http_url' not found in response from {self.image_url}")
+        if not payload.get("http_urls"):
+            logger.warning(
+                f"'http_urls' not found or empty in response from {self.image_url}"
+            )
             logger.debug(resp.text)
             raise Exception("Unexpected response from image provider")
-        return payload["http_url"]
+        return payload["http_urls"][0]
 
     @property
     def download_url(self) -> str:
