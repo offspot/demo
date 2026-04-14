@@ -120,6 +120,7 @@ def get_checksum_from(url: str) -> S3CompatibleETag:
     have a checksum."""
 
     with requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT_SECONDS, stream=True) as resp:
+        is_s3 = bool(resp.headers.get("x-amz-request-id", ""))
         size = resp.headers.get("Content-Length")
         etag = resp.headers.get("ETag", "").replace('"', "").replace("'", "")
     if not size or not etag:
@@ -128,7 +129,7 @@ def get_checksum_from(url: str) -> S3CompatibleETag:
     size = int(size)
 
     # single part etag
-    if "-" not in etag:
+    if not is_s3 or "-" not in etag:
         return S3CompatibleETag(etag, 1, size, size)
 
     digest, nb_parts = etag.split("-", 1)
