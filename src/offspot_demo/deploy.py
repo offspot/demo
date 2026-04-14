@@ -129,7 +129,10 @@ def get_checksum_from(url: str) -> S3CompatibleETag:
     size = int(size)
 
     # single part etag
-    if not is_s3 or "-" not in etag:
+    if not is_s3:
+        return S3CompatibleETag(etag, 0, size, size)
+
+    if "-" not in etag:
         return S3CompatibleETag(etag, 1, size, size)
 
     digest, nb_parts = etag.split("-", 1)
