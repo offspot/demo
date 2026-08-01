@@ -4,6 +4,7 @@ Requires=docker.service
 After=docker.service
 
 [Service]
+LogNamespace=demo
 Restart=no
 RestartSec=30
 User=root

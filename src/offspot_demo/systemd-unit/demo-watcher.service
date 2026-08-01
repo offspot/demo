@@ -4,6 +4,7 @@ Requires=multi-proxy.service
 After=multi-proxy.service
 
 [Service]
+LogNamespace=demo
 User=root
 # we execute config-watcher as a pre-command as it updates the EnvironmentFile
 # and we need update-watcher to use the new version.
