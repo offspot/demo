@@ -6,6 +6,7 @@ Generates static homepage
 Dependencies:
 - Jinja2
 """
+
 import argparse
 import dataclasses
 import os
@@ -93,7 +94,7 @@ http://{$FQDN}, https://{$FQDN} {
 }
 
 {% for demo in demos.values() %}
-http://{{demo.dns_alias}}.{$FQDN}, https://{{demo.dns_alias}}.{$FQDN}, http://*.{{demo.dns_alias}}.{$FQDN}, https://*.{{demo.dns_alias}}.{$FQDN}{% if demo.subdomains %}{% for subdomain in demo.subdomains %}, http://{{ subdomain }}.{{demo.dns_alias}}.{$FQDN}, https://{{ subdomain }}.{{demo.dns_alias}}.{$FQDN}{% endfor %}{% endif %} {
+http://{{demo.dns_alias}}.{$FQDN}, https://{{demo.dns_alias}}.{$FQDN}{% if demo.subdomains %}{% for subdomain in demo.subdomains %}, http://{{ subdomain }}.{{demo.dns_alias}}.{$FQDN}, https://{{ subdomain }}.{{demo.dns_alias}}.{$FQDN}{% endfor %}{% endif %} {
     tls {$TLS_EMAIL}
     log
 
@@ -120,12 +121,6 @@ http://captive.{{demo.dns_alias}}.{$FQDN}, https://captive.{{demo.dns_alias}}.{$
     redir http://{{demo.dns_alias}}.{$FQDN}:{{demo.captive_port}}
 }
 {% endfor %}
-
-http://*.{$FQDN}, https://*.{$FQDN} {
-    tls {$TLS_EMAIL}
-    log
-    respond "Not found! This address is not for a configured demo" 404
-}
 
 """
 )
