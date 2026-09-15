@@ -86,20 +86,93 @@ Kiwix is running a demo instance at https://demo.hotspot.kiwix.org
 
 ### Domain names
 
-- `demo.hotspot.kiwix.org A 62.210.206.65`
+- `demo.hotspot.kiwix.org A 51.158.55.51`
 - `*.demo.hotspot.kiwix.org CNAME demo.hotspot.kiwix.org`
 
 ### Machine
 
-- Scaleway Start-1-L-SATA (dedibox) with 16GB RAM and 2TB disk for €20/m
+- Scaleway EM-A116X-SSD (Elastic Metal) with 32GB RAM and 2TB SSD disk for €28/m
 - Debian
 - node-like setup with bastion
 - docker install (comes with compose)
-- python install (3.12) + venv (in `install.sh`)
-- `mount`, `coreutils` and `aria2` (in `install.sh`)
-- this project installed in `/root/demo/env`
-  - `pip install git+https://github.com/offspot/demo@main`
-- configuration at `/etc/demo/environment`. Files in `/data/demo`
+- configuration at `/etc/demo/environment`. Files in `/data/demo`. Virtual devices mounted in `/loop-data`
+
+
+```sh
+apt install python3.13-venv unzip mount coreutils
+wget -O /tmp/aria2.zip https://github.com/abcfy2/aria2-static-build/releases/download/1.37.0/aria2-x86_64-linux-musl_static.zip \
+  && unzip -d /tmp /tmp/aria2.zip  \
+  && mv /tmp/aria2c /usr/local/bin \
+  && rm /tmp/aria2.zip \
+  && aria2c -v
+mkdir -p /var/log/demo
+mkdir -p /etc/demo
+mkdir -p /loop-data
+mkdir -p /data/demo/{data,images,compose}
+python3 -m venv /data/demo/env
+source /data/demo/env/bin/activate
+vim /etc/demo/environment
+git clone https://github.com/offspot/demo.git /data/demo/repo
+pip install -e /data/demo/repo
+vim ~/.bashrc
+echo "loop" >> /etc/modules-load.d/modules.conf
+modprobe loop
+cp /data/demo/repo/src/offspot_demo/systemd-unit/* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now multi-proxy.service demo-watcher.service demo-watcher.timer
+```
+
+**`~/.bashrc`**
+
+```sh
+set -o allexport
+source /etc/demo/environment
+source /data/demo/env/bin/activate
+env | grep OFFSPOT_DEMO
+```
+
+**`/etc/demo/environment`**
+
+```sh
+# Configuration file (this very one file)
+OFFSPOT_CONFIGURATION="/etc/demo/environment"
+
+# FQDN which will be used by the demo, e.g. demo.hotspot.kiwix.org
+OFFSPOT_DEMO_FQDN="demo.hotspot.kiwix.org"
+OFFSPOT_DEMO_HOST_IP="51.158.55.51"
+
+# comma-separated demo info
+# format is {ident}:{alias}:
+# alias can be empty.
+# last semicolon is mandatory so keep a single format between light config (this)
+# and rich config with subdomains that is only known upon deployment.
+OFFSPOT_DEMOS_LIST="preppers:preppers:Preppers Package:,premium-preppers:premium-preppers:Preppers Premium Package:,computers:compsci:Computer Science Package:,medical:medical:Medical package:,wikipedia-en:wikipedia:Wikipedia Package:"
+
+# Root folder where everything will be deployed (in per-demo subfolder)
+#OFFSPOT_DEMO_TARGET_ROOT_DIR="/data/demo/data"
+OFFSPOT_DEMO_TARGET_ROOT_DIR="/loop-data"
+
+# Location of the images on disk
+OFFSPOT_DEMO_IMAGES_ROOT_DIR="/data/demo/images"
+OFFSPOT_DEMO_COMPOSE_ROOT_DIR="/data/demo/compose"
+
+# OCI plateform to use (by default, offspot is linux/aarch64 but usually demo will run on linux/amd64)
+OFFSPOT_DEMO_OCI_PLATFORM="linux/amd64"
+
+# Email adress for acme to receive notifications about expiring/expired certificates
+OFFSPOT_DEMO_TLS_EMAIL="dev@kiwix.org"
+
+OFFSPOT_DEMO_SRC_DIR="/data/demo/repo/src/offspot_demo"
+OFFSPOT_ENV_DIR="/data/demo/env"
+OFFSPOT_DEMO_PROXY_CONTAINER_NAME="multi-proxy"
+OFFSPOT_DEMO_PROXY_IMAGE_NAME="multi-proxy"
+STARTUP_DURATION="15"
+
+IMAGER_SERVICE_API_USERNAME="xxxxx"
+IMAGER_SERVICE_API_PASSWORD="xxxxx"
+MULTI_CONFIG_URL="https://raw.githubusercontent.com/kiwix/operations/main/demos/demo.offspot.yaml"
+```
+
 
 ## Next
 
