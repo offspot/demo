@@ -12,7 +12,7 @@ dependencies = [
     "jinja2==3.1.6",
     "pyyaml==6.0.3"
 ]
-dynamic = ["authors", "keywords", "license", "version", "urls"]
+dynamic = ["authors", "classifiers", "keywords", "license", "version", "urls"]
 
 [tool.hatch.metadata.hooks.openzim-metadata]
 additional-keywords = ["offspot", "demo", "hotspot"]
