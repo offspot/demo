@@ -4,15 +4,15 @@ build-backend = "hatchling.build"
 
 [project]
 name = "offspot-demo"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.15"
 description = "Kiwix Hotspot Demo"
 readme = "README.md"
 dependencies = [
-    "requests==2.32.3",
-    "Jinja2==3.1.6",
-    "pyyaml==6.0.2"
+    "requests==2.34.2",
+    "jinja2==3.1.6",
+    "pyyaml==6.0.3"
 ]
-dynamic = ["authors", "classifiers", "keywords", "license", "version", "urls"]
+dynamic = ["authors", "keywords", "license", "version", "urls"]
 
 [tool.hatch.metadata.hooks.openzim-metadata]
 additional-keywords = ["offspot", "demo", "hotspot"]
