@@ -32,7 +32,7 @@ class Deployment:
     http_port: int
     captive_http_port: int
     _download_url: str = ""
-    _subdomains: list[str] = field(default_factory=list)
+    _subdomains: list[str] = field(default_factory=list[str])
 
     def __post_init__(self):
         if not self.ident or not self.alias:

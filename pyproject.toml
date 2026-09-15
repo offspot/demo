@@ -19,18 +19,18 @@ additional-keywords = ["offspot", "demo", "hotspot"]
 
 [project.optional-dependencies]
 scripts = [
-  "invoke==2.2.0",
+  "invoke==3.0.3",
 ]
 lint = [
   "black==25.1.0",
-  "ruff==0.9.10",
+  "ruff==0.16.7",
 ]
 check = [
-  "pyright==1.1.396",
+  "pyright==1.1.414",
 ]
 test = [
-  "pytest==8.3.5",
-  "coverage==7.6.12",
+  "pytest==9.1.1",
+  "coverage==7.16.1",
 ]
 dev = [
   "ipython==9.0.2",
